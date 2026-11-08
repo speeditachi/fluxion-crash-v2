@@ -1,6 +1,6 @@
 
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fr">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -21,21 +21,26 @@
 <main>
 
   <section class="hero">
+    <div class="hero-image">
+      <img src="itachi-pole.jpg" alt="Itachi avec le Sharingan">
+    </div>
+
     <div class="symbol">⚡</div>
     <h1>FLUXION CRASH V2</h1>
-    <p>Your WhatsApp Bot Management Platform</p>
+    <p>YOUR NEXT GENERATION WHATSAPP BOT</p>
 
     <div class="features">
-      <span>⚡ Connexion rapide</span>
-      <span>✓ Gestion sécurisée</span>
+      <span>⚡ CONNEXION RAPIDE</span>
+      <span>✓ CONFIGURATION SÉCURISÉE</span>
+      <span>◈ INTERFACE PREMIUM</span>
     </div>
   </section>
 
   <section class="card">
     <h2>CONNECT YOUR WHATSAPP</h2>
-    <p>Manage your authorized WhatsApp connection.</p>
+    <p>Configure ta connexion WhatsApp autorisée.</p>
 
-    <label for="phone">WhatsApp Number</label>
+    <label for="phone">NUMÉRO WHATSAPP</label>
 
     <input
       id="phone"
@@ -44,43 +49,56 @@
     >
 
     <button id="connectBtn">
-      CONNECT WHATSAPP
+      CONTINUER
     </button>
 
     <p id="message" class="message">
-      Secure connection setup pending.
+      En attente de configuration...
     </p>
 
     <small>
-      Only connect accounts you own or are authorized to manage.
+      Connecte uniquement un compte que tu possèdes
+      ou que tu es autorisé à gérer.
     </small>
   </section>
 
-  <section class="card">
-    <h2>FLUXION COMMANDS</h2>
+  <section class="steps-section">
+    <h2>HOW TO CONNECT</h2>
+    <p class="section-subtitle">
+      SUIS LES ÉTAPES POUR CONFIGURER FLUXION
+    </p>
 
-    <div class="command">
-      .menu <span>Main menu</span>
+    <div class="step-card">
+      <div class="step-number">01</div>
+      <div class="step-content">
+        <h3>ENTRE TON NUMÉRO</h3>
+        <p>
+          Entre ton numéro WhatsApp avec l'indicatif
+          de ton pays.
+        </p>
+      </div>
     </div>
 
-    <div class="command">
-      .help <span>Help information</span>
+    <div class="step-card">
+      <div class="step-number">02</div>
+      <div class="step-content">
+        <h3>CONFIGURE TA CONNEXION</h3>
+        <p>
+          Suis les instructions officielles pour
+          autoriser la connexion WhatsApp.
+        </p>
+      </div>
     </div>
 
-    <div class="command">
-      .owner <span>Owner information</span>
-    </div>
-
-    <div class="command">
-      .ping <span>Bot status</span>
-    </div>
-
-    <div class="command">
-      .profile <span>User profile</span>
-    </div>
-
-    <div class="command">
-      .uptime <span>Running time</span>
+    <div class="step-card">
+      <div class="step-number">03</div>
+      <div class="step-content">
+        <h3>ACTIVE FLUXION</h3>
+        <p>
+          Termine la configuration sur WhatsApp
+          et vérifie le statut de ton bot.
+        </p>
+      </div>
     </div>
   </section>
 
@@ -88,17 +106,22 @@
     <h2>BOT STATUS</h2>
 
     <div class="status-row">
-      <span>Website</span>
+      <span>WEBSITE</span>
       <strong>ONLINE</strong>
     </div>
 
     <div class="status-row">
-      <span>WhatsApp</span>
+      <span>BACKEND</span>
+      <strong>ONLINE</strong>
+    </div>
+
+    <div class="status-row">
+      <span>WHATSAPP</span>
       <strong id="waStatus">NOT CONNECTED</strong>
     </div>
 
     <div class="status-row">
-      <span>Version</span>
+      <span>VERSION</span>
       <strong>2.0.0</strong>
     </div>
   </section>
