@@ -1,51 +1,44 @@
-
 const connectBtn = document.getElementById("connectBtn");
-const phoneInput = document.getElementById("phone");
 const message = document.getElementById("message");
 const waStatus = document.getElementById("waStatus");
 
 const API_URL = "https://fluxion-crash-v2.onrender.com";
 
-if (connectBtn && phoneInput && message && waStatus) {
+if (connectBtn && message && waStatus) {
   connectBtn.addEventListener("click", async () => {
-    const phone = phoneInput.value.trim();
-
-    if (!phone) {
-      message.textContent = "Please enter your WhatsApp number.";
-      return;
-    }
-
-    if (!/^\+[1-9]\d{7,14}$/.test(phone)) {
-      message.textContent = "Enter a valid number with country code.";
-      return;
-    }
-
     connectBtn.disabled = true;
     message.textContent = "Checking FLUXION backend...";
 
     try {
       const response = await fetch(`${API_URL}/api/status`, {
         method: "GET",
-        mode: "cors",
         cache: "no-store"
       });
 
       if (!response.ok) {
-        throw new Error(`HTTP error: ${response.status}`);
+        throw new Error("Backend unavailable");
       }
 
       const data = await response.json();
 
-      waStatus.textContent = data.whatsapp || "NOT CONNECTED";
+      if (data.whatsapp !== "CONFIGURED") {
+        waStatus.textContent = "NOT CONFIGURED";
+        message.textContent =
+          "WhatsApp Cloud API is not configured.";
+        return;
+      }
+
+      waStatus.textContent = "ONLINE";
+
       message.textContent =
-        "Backend connected. WhatsApp pairing is not configured yet.";
+        "FLUXION is online! Open WhatsApp and send .menu to your FLUXION Business number.";
 
     } catch (error) {
-      console.error("FLUXION connection error:", error);
+      console.error(error);
 
       waStatus.textContent = "OFFLINE";
       message.textContent =
-        "Could not connect to FLUXION backend. Please try again.";
+        "Could not connect to FLUXION backend. Try again later.";
     } finally {
       connectBtn.disabled = false;
     }
