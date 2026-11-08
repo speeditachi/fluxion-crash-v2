@@ -11,14 +11,24 @@ const VERIFY_TOKEN = process.env.WHATSAPP_VERIFY_TOKEN;
 const APP_SECRET = process.env.META_APP_SECRET;
 const API_VERSION = process.env.WHATSAPP_API_VERSION || "v25.0";
 
+const startTime = Date.now();
+
+app.disable("x-powered-by");
+
 // CORS
 app.use((req, res, next) => {
-  res.header(
+  res.setHeader(
     "Access-Control-Allow-Origin",
     "https://fluxion-crash-v2.vercel.app"
   );
-  res.header("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
-  res.header("Access-Control-Allow-Headers", "Content-Type");
+  res.setHeader(
+    "Access-Control-Allow-Methods",
+    "GET, POST, OPTIONS"
+  );
+  res.setHeader(
+    "Access-Control-Allow-Headers",
+    "Content-Type"
+  );
 
   if (req.method === "OPTIONS") {
     return res.sendStatus(204);
@@ -27,10 +37,10 @@ app.use((req, res, next) => {
   next();
 });
 
-// Send WhatsApp message
+// WhatsApp API request
 async function sendMessage(to, message) {
   if (!TOKEN || !PHONE_ID) {
-    throw new Error("WhatsApp credentials are missing");
+    throw new Error("WhatsApp API is not configured");
   }
 
   const response = await fetch(
@@ -54,39 +64,31 @@ async function sendMessage(to, message) {
   const result = await response.json();
 
   if (!response.ok) {
-    console.error("WhatsApp API error:", result);
+    console.error("WhatsApp API error:", {
+      status: response.status,
+      error: result.error?.message || "Unknown API error"
+    });
+
     throw new Error("WhatsApp message failed");
   }
 
   return result;
 }
 
-// Webhook verification
+// Verify Meta webhook
 app.get("/webhook", (req, res) => {
-  const mode = String(req.query["hub.mode"] || "").trim();
+  const mode = String(req.query["hub.mode"] || "");
   const receivedToken = String(
     req.query["hub.verify_token"] || ""
-  ).trim();
+  );
   const challenge = String(
     req.query["hub.challenge"] || ""
-  ).trim();
-
-  const configuredToken = String(
-    process.env.WHATSAPP_VERIFY_TOKEN || ""
-  ).trim();
-
-  console.log("Webhook verification:", {
-    mode,
-    tokenReceived: !!receivedToken,
-    tokenConfigured: !!configuredToken,
-    tokenMatches: receivedToken === configuredToken,
-    challengeReceived: !!challenge
-  });
+  );
 
   if (
     mode === "subscribe" &&
-    configuredToken &&
-    receivedToken === configuredToken &&
+    VERIFY_TOKEN &&
+    receivedToken === VERIFY_TOKEN &&
     challenge
   ) {
     return res.status(200).type("text/plain").send(challenge);
@@ -139,31 +141,57 @@ app.post(
           const messages = change.value?.messages || [];
 
           for (const msg of messages) {
-            if (msg.type !== "text" || !msg.from) continue;
+            if (!msg.from || msg.type !== "text") continue;
 
-            const incomingText =
+            const command =
               msg.text?.body?.trim().toLowerCase() || "";
 
             let reply;
 
-            if ([".start", ".menu", ".help"].includes(incomingText)) {
-              reply =
-                "⚡ FLUXION CRASH V2\n\n" +
-                ".menu - Main menu\n" +
-                ".help - Help\n" +
-                ".ping - Check status\n" +
-                ".uptime - Running time\n" +
-                ".owner - Owner";
-            } else if (incomingText === ".ping") {
-              reply = "⚡ FLUXION PONG!";
-            } else if (incomingText === ".owner") {
-              reply = "👑 FLUXION CRASH V2 OWNER";
-            } else if (incomingText === ".uptime") {
-              reply = "⚡ FLUXION CRASH V2 IS ONLINE!";
-            } else {
-              reply =
-                "Welcome to FLUXION CRASH V2!\n" +
-                "Send .menu to see available commands.";
+            switch (command) {
+              case ".start":
+              case ".menu":
+              case ".help":
+                reply =
+                  "╭━━〔 ⚡ FLUXION CRASH V2 〕━━╮\n\n" +
+                  "〔 STATUS 〕\n" +
+                  "• .start\n" +
+                  "• .menu\n" +
+                  "• .help\n" +
+                  "• .ping\n" +
+                  "• .uptime\n\n" +
+                  "〔 OWNER 〕\n" +
+                  "• .owner\n\n" +
+                  "╰━━━━━━━━━━━━━━━━━━━━╯\n" +
+                  "POWER • SPEED • STYLE";
+                break;
+
+              case ".ping":
+                reply = "⚡ FLUXION PONG!";
+                break;
+
+              case ".owner":
+                reply = "👑 OWNER: SPEED ITACHI";
+                break;
+
+              case ".uptime": {
+                const seconds = Math.floor(
+                  (Date.now() - startTime) / 1000
+                );
+
+                const hours = Math.floor(seconds / 3600);
+                const minutes = Math.floor((seconds % 3600) / 60);
+
+                reply =
+                  `⚡ FLUXION UPTIME\n` +
+                  `${hours}h ${minutes}m ${seconds % 60}s`;
+                break;
+              }
+
+              default:
+                reply =
+                  "Welcome to FLUXION CRASH V2!\n" +
+                  "Send .menu to see available commands.";
             }
 
             await sendMessage(msg.from, reply);
@@ -176,7 +204,7 @@ app.post(
   }
 );
 
-// JSON parser for other routes
+// JSON routes
 app.use(express.json());
 
 // Home
@@ -184,33 +212,91 @@ app.get("/", (req, res) => {
   res.json({
     bot: "FLUXION CRASH V2",
     status: "ONLINE",
-    version: "2.0.0"
+    version: "2.1.0"
   });
 });
 
-// Status
+// Real API configuration status
 app.get("/api/status", (req, res) => {
+  res.setHeader("Cache-Control", "no-store");
+
   res.json({
     success: true,
+    backend: "ONLINE",
     whatsapp: TOKEN && PHONE_ID ? "CONFIGURED" : "NOT CONFIGURED",
-    message: "Backend is running"
+    authorization: "NOT VERIFIED",
+    message:
+      "Backend is running. WhatsApp authorization must be verified separately."
   });
+});
+
+// Verify WhatsApp Business API credentials
+app.get("/api/whatsapp/check", async (req, res) => {
+  res.setHeader("Cache-Control", "no-store");
+
+  if (!TOKEN || !PHONE_ID) {
+    return res.status(503).json({
+      success: false,
+      whatsapp: "NOT CONFIGURED"
+    });
+  }
+
+  try {
+    const response = await fetch(
+      `https://graph.facebook.com/${API_VERSION}/${PHONE_ID}`,
+      {
+        headers: {
+          Authorization: `Bearer ${TOKEN}`
+        }
+      }
+    );
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      return res.status(502).json({
+        success: false,
+        whatsapp: "AUTHENTICATION FAILED",
+        message: "WhatsApp API credentials could not be verified."
+      });
+    }
+
+    return res.json({
+      success: true,
+      whatsapp: "API ACCESS VERIFIED",
+      authorization: "BUSINESS API ACCESS VERIFIED",
+      phoneNumberId: PHONE_ID,
+      displayPhoneNumber: result.display_phone_number || null
+    });
+
+  } catch (error) {
+    console.error("WhatsApp check error:", error.message);
+
+    return res.status(503).json({
+      success: false,
+      whatsapp: "API UNAVAILABLE"
+    });
+  }
 });
 
 // Commands
 app.get("/api/commands", (req, res) => {
   res.json({
+    bot: "FLUXION CRASH V2",
     commands: [
+      ".start",
       ".menu",
       ".help",
-      ".owner",
       ".ping",
+      ".owner",
       ".uptime"
     ]
   });
 });
 
-// Start server
+// Server
 app.listen(PORT, "0.0.0.0", () => {
-  console.log("⚡ FLUXION CRASH V2 running on port " + PORT);
+  console.log(
+    "⚡ FLUXION CRASH V2 running on port " + PORT
+  );
 });
