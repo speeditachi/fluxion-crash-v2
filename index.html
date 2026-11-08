@@ -1,11 +1,11 @@
 
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#08080c">
-  <meta name="description" content="FLUXION CRASH V2 - WhatsApp bot configuration platform.">
+  <meta name="description" content="FLUXION CRASH V2 platform.">
   <title>FLUXION CRASH V2 | Official</title>
   <link rel="stylesheet" href="style.css">
 </head>
@@ -13,12 +13,19 @@
 <body>
 
 <header class="navbar">
-  <a href="#" class="logo" style="text-decoration:none">
+  <a href="index.html" class="logo" style="text-decoration:none">
     ☠ FLUXION<span style="color:white">.</span>
   </a>
 
-  <div class="status">
-    <span></span> SYSTEM ONLINE
+  <div style="display:flex;align-items:center;gap:15px">
+    <a href="account.html"
+       style="color:#ff526e;text-decoration:none;font-weight:bold">
+      ACCOUNT ↗
+    </a>
+
+    <div class="status">
+      <span></span> SYSTEM ONLINE
+    </div>
   </div>
 </header>
 
@@ -60,8 +67,7 @@
     <h2>CONNECT YOUR WHATSAPP</h2>
 
     <p>
-      Configure your authorized WhatsApp Business
-      connection through the official service.
+      Check your WhatsApp Business API configuration.
     </p>
 
     <label for="phone">WHATSAPP PHONE NUMBER</label>
@@ -74,7 +80,7 @@
     >
 
     <button id="connectBtn">
-      CONTINUE →
+      CHECK CONNECTION →
     </button>
 
     <p id="message" class="message" aria-live="polite">
@@ -82,8 +88,8 @@
     </p>
 
     <small>
-      Only connect accounts you own or are authorized
-      to manage. Never share verification codes.
+      Never share passwords, verification codes,
+      or private account credentials.
     </small>
 
   </section>
@@ -99,10 +105,9 @@
     <div class="step-card">
       <div class="step-number">01</div>
       <div class="step-content">
-        <h3>ENTER YOUR NUMBER</h3>
+        <h3>CHECK YOUR CONFIGURATION</h3>
         <p>
-          Enter the authorized WhatsApp Business
-          phone number with its country code.
+          Check whether the FLUXION backend is available.
         </p>
       </div>
     </div>
@@ -110,10 +115,9 @@
     <div class="step-card">
       <div class="step-number">02</div>
       <div class="step-content">
-        <h3>AUTHORIZE CONNECTION</h3>
+        <h3>VERIFY API ACCESS</h3>
         <p>
-          Follow the official WhatsApp Business
-          authorization instructions.
+          Check your authorized WhatsApp Business API access.
         </p>
       </div>
     </div>
@@ -123,8 +127,7 @@
       <div class="step-content">
         <h3>CHECK YOUR STATUS</h3>
         <p>
-          Verify your configuration and confirm
-          that your service is ready.
+          View the latest configuration status.
         </p>
       </div>
     </div>
@@ -150,13 +153,13 @@
     </div>
 
     <div class="status-row">
-      <span>WHATSAPP</span>
-      <strong id="waStatus">NOT CONNECTED</strong>
+      <span>WHATSAPP API</span>
+      <strong id="waStatus">NOT VERIFIED</strong>
     </div>
 
     <div class="status-row">
       <span>VERSION</span>
-      <strong>2.0.0</strong>
+      <strong>2.1.0</strong>
     </div>
 
   </section>
@@ -189,4 +192,3 @@
 
 </body>
 </html>
-
