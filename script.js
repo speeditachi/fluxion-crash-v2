@@ -19,7 +19,8 @@ connectBtn.addEventListener("click", () => {
   }
 
   message.textContent =
-    "Number accepted. Secure WhatsApp integration is not configured yet.";
+    "DEMO MODE: Your number was validated. No WhatsApp pairing code was generated.";
 
-  waStatus.textContent = "PENDING SETUP";
+  waStatus.textContent = "DEMO MODE";
 });
+
