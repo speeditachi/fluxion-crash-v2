@@ -4,7 +4,9 @@ const phoneInput = document.getElementById("phone");
 const message = document.getElementById("message");
 const waStatus = document.getElementById("waStatus");
 
-connectBtn.addEventListener("click", () => {
+const API_URL = "https://fluxion-crash-v2.onrender.com";
+
+connectBtn.addEventListener("click", async () => {
   const phone = phoneInput.value.trim();
 
   if (!phone) {
@@ -18,9 +20,23 @@ connectBtn.addEventListener("click", () => {
     return;
   }
 
-  message.textContent =
-    "DEMO MODE: Your number was validated. No WhatsApp pairing code was generated.";
+  connectBtn.disabled = true;
+  message.textContent = "Checking FLUXION backend...";
 
-  waStatus.textContent = "DEMO MODE";
+  try {
+    const response = await fetch(`${API_URL}/api/status`);
+    if (!response.ok) throw new Error("Backend unavailable");
+
+    const data = await response.json();
+
+    waStatus.textContent = data.whatsapp || "NOT CONNECTED";
+    message.textContent =
+      "Backend connected successfully. WhatsApp pairing is not configured.";
+  } catch (error) {
+    waStatus.textContent = "OFFLINE";
+    message.textContent = "Could not connect to FLUXION backend.";
+  } finally {
+    connectBtn.disabled = false;
+  }
 });
 
