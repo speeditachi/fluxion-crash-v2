@@ -11,19 +11,14 @@ const VERIFY_TOKEN = process.env.WHATSAPP_VERIFY_TOKEN;
 const APP_SECRET = process.env.META_APP_SECRET;
 const API_VERSION = process.env.WHATSAPP_API_VERSION || "v25.0";
 
+// CORS
 app.use((req, res, next) => {
   res.header(
     "Access-Control-Allow-Origin",
     "https://fluxion-crash-v2.vercel.app"
   );
-  res.header(
-    "Access-Control-Allow-Methods",
-    "GET, POST, OPTIONS"
-  );
-  res.header(
-    "Access-Control-Allow-Headers",
-    "Content-Type"
-  );
+  res.header("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+  res.header("Access-Control-Allow-Headers", "Content-Type");
 
   if (req.method === "OPTIONS") {
     return res.sendStatus(204);
@@ -32,6 +27,7 @@ app.use((req, res, next) => {
   next();
 });
 
+// Send WhatsApp message
 async function sendMessage(to, message) {
   if (!TOKEN || !PHONE_ID) {
     throw new Error("WhatsApp credentials are missing");
@@ -67,19 +63,36 @@ async function sendMessage(to, message) {
 
 // Webhook verification
 app.get("/webhook", (req, res) => {
-  const mode = req.query["hub.mode"];
-  const token = req.query["hub.verify_token"];
-  const challenge = req.query["hub.challenge"];
+  const mode = String(req.query["hub.mode"] || "").trim();
+  const receivedToken = String(
+    req.query["hub.verify_token"] || ""
+  ).trim();
+  const challenge = String(
+    req.query["hub.challenge"] || ""
+  ).trim();
+
+  const configuredToken = String(
+    process.env.WHATSAPP_VERIFY_TOKEN || ""
+  ).trim();
+
+  console.log("Webhook verification:", {
+    mode,
+    tokenReceived: !!receivedToken,
+    tokenConfigured: !!configuredToken,
+    tokenMatches: receivedToken === configuredToken,
+    challengeReceived: !!challenge
+  });
 
   if (
     mode === "subscribe" &&
-    token === VERIFY_TOKEN &&
+    configuredToken &&
+    receivedToken === configuredToken &&
     challenge
   ) {
-    return res.status(200).send(challenge);
+    return res.status(200).type("text/plain").send(challenge);
   }
 
-  return res.sendStatus(403);
+  return res.status(403).send("Webhook verification failed");
 });
 
 // Receive WhatsApp messages
@@ -121,20 +134,19 @@ app.post(
     res.sendStatus(200);
 
     try {
-      const entries = data.entry || [];
-
-      for (const entry of entries) {
+      for (const entry of data.entry || []) {
         for (const change of entry.changes || []) {
           const messages = change.value?.messages || [];
 
           for (const msg of messages) {
             if (msg.type !== "text" || !msg.from) continue;
 
-            const text = msg.text?.body?.trim().toLowerCase() || "";
+            const incomingText =
+              msg.text?.body?.trim().toLowerCase() || "";
 
             let reply;
 
-            if ([".start", ".menu", ".help"].includes(text)) {
+            if ([".start", ".menu", ".help"].includes(incomingText)) {
               reply =
                 "⚡ FLUXION CRASH V2\n\n" +
                 ".menu - Main menu\n" +
@@ -142,11 +154,11 @@ app.post(
                 ".ping - Check status\n" +
                 ".uptime - Running time\n" +
                 ".owner - Owner";
-            } else if (text === ".ping") {
+            } else if (incomingText === ".ping") {
               reply = "⚡ FLUXION PONG!";
-            } else if (text === ".owner") {
+            } else if (incomingText === ".owner") {
               reply = "👑 FLUXION CRASH V2 OWNER";
-            } else if (text === ".uptime") {
+            } else if (incomingText === ".uptime") {
               reply = "⚡ FLUXION CRASH V2 IS ONLINE!";
             } else {
               reply =
@@ -164,8 +176,10 @@ app.post(
   }
 );
 
+// JSON parser for other routes
 app.use(express.json());
 
+// Home
 app.get("/", (req, res) => {
   res.json({
     bot: "FLUXION CRASH V2",
@@ -174,6 +188,7 @@ app.get("/", (req, res) => {
   });
 });
 
+// Status
 app.get("/api/status", (req, res) => {
   res.json({
     success: true,
@@ -182,6 +197,7 @@ app.get("/api/status", (req, res) => {
   });
 });
 
+// Commands
 app.get("/api/commands", (req, res) => {
   res.json({
     commands: [
@@ -194,7 +210,7 @@ app.get("/api/commands", (req, res) => {
   });
 });
 
+// Start server
 app.listen(PORT, "0.0.0.0", () => {
   console.log("⚡ FLUXION CRASH V2 running on port " + PORT);
 });
-
