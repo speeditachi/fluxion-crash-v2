@@ -8,6 +8,7 @@
   <title>FLUXION CRASH V2 | Official</title>
   <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
 
 <header class="navbar">
@@ -20,6 +21,7 @@
        style="color:#ff526e;text-decoration:none;font-weight:bold">
       ACCOUNT ↗
     </a>
+
     <div class="status">
       <span></span> SYSTEM ONLINE
     </div>
@@ -27,7 +29,9 @@
 </header>
 
 <main>
+
   <section class="hero">
+
     <div class="hero-image">
       <img src="IMG_3861.jpeg" alt="FLUXION CRASH V2">
     </div>
@@ -49,56 +53,86 @@
       <span>✓ ACCOUNT PROTECTION</span>
       <span>◈ PREMIUM DESIGN</span>
     </div>
+
   </section>
 
   <section class="card" id="connect">
+
     <p style="color:#ff526e;font-size:11px;letter-spacing:2px;font-weight:bold">
       FLUXION CONNECTION
     </p>
 
-    <h2>WHATSAPP CONNECTION</h2>
+    <h2>CONNECT WHATSAPP</h2>
 
     <p>
-      Personal WhatsApp linking is not available through this page yet.
-      Do not enter your password, verification code, or private session details.
+      Enter your phone number to continue.
     </p>
 
+    <label for="phone">PHONE NUMBER</label>
+
+    <input
+      id="phone"
+      type="tel"
+      placeholder="+509XXXXXXXX"
+      autocomplete="tel"
+    >
+
+    <button id="connectBtn" type="button">
+      CONTINUE →
+    </button>
+
     <p id="message" class="message" aria-live="polite">
-      FLUXION SYSTEM ONLINE
+      Waiting for phone number...
     </p>
+
+    <small>
+      Never share your password or WhatsApp verification codes.
+    </small>
+
   </section>
 
   <section class="steps-section">
+
     <h2>HOW IT WORKS</h2>
 
-    <p class="section-subtitle">THREE SIMPLE STEPS</p>
+    <p class="section-subtitle">
+      THREE SIMPLE STEPS
+    </p>
 
     <div class="step-card">
       <div class="step-number">01</div>
       <div class="step-content">
-        <h3>OPEN FLUXION</h3>
-        <p>Visit the official FLUXION platform.</p>
+        <h3>ENTER YOUR NUMBER</h3>
+        <p>
+          Enter your phone number with its country code.
+        </p>
       </div>
     </div>
 
     <div class="step-card">
       <div class="step-number">02</div>
       <div class="step-content">
-        <h3>MANAGE YOUR ACCOUNT</h3>
-        <p>Access your profile securely.</p>
+        <h3>CONTINUE</h3>
+        <p>
+          Check that your phone number is entered correctly.
+        </p>
       </div>
     </div>
 
     <div class="step-card">
       <div class="step-number">03</div>
       <div class="step-content">
-        <h3>CHECK YOUR STATUS</h3>
-        <p>View the latest platform status.</p>
+        <h3>CONNECTION STATUS</h3>
+        <p>
+          View the current FLUXION connection status.
+        </p>
       </div>
     </div>
+
   </section>
 
   <section class="card">
+
     <p style="color:#ff526e;font-size:11px;letter-spacing:2px;font-weight:bold">
       LIVE MONITORING
     </p>
@@ -124,23 +158,51 @@
       <span>VERSION</span>
       <strong>2.2.0</strong>
     </div>
+
   </section>
+
 </main>
 
 <footer>
+
   <strong style="letter-spacing:2px">☠ FLUXION CRASH V2</strong>
+
   <p>POWERED BY SPEED ITACHI</p>
 
-  <a href="https://wa.me/50944618286"
-     class="whatsapp-contact"
-     target="_blank"
-     rel="noopener noreferrer"
-     style="color:#ff526e;text-decoration:none;font-size:13px">
+  <a
+    href="https://wa.me/50944618286"
+    class="whatsapp-contact"
+    target="_blank"
+    rel="noopener noreferrer"
+    style="color:#ff526e;text-decoration:none;font-size:13px"
+  >
     ☏ CONTACT SUPPORT
   </a>
 
-  <p><small>© 2026 FLUXION. All rights reserved.</small></p>
+  <p>
+    <small>© 2026 FLUXION. All rights reserved.</small>
+  </p>
+
 </footer>
+
+<script>
+const connectBtn = document.getElementById("connectBtn");
+const phoneInput = document.getElementById("phone");
+const message = document.getElementById("message");
+
+connectBtn.addEventListener("click", () => {
+  const phone = phoneInput.value.trim();
+
+  if (!/^\+[1-9]\d{7,14}$/.test(phone)) {
+    message.textContent =
+      "Enter a valid phone number with country code.";
+    return;
+  }
+
+  message.textContent =
+    "Number accepted. WhatsApp linking is not available yet.";
+});
+</script>
 
 </body>
 </html>
