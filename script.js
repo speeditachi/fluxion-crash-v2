@@ -12,47 +12,42 @@ if (connectBtn && phoneInput && message && waStatus) {
 
     if (!/^\+[1-9]\d{7,14}$/.test(phone)) {
       message.textContent =
-        "Please enter a valid phone number with country code.";
+        "Enter a valid phone number with country code.";
       phoneInput.focus();
       return;
     }
 
     connectBtn.disabled = true;
-    message.textContent = "CHECKING FLUXION BACKEND...";
+    message.textContent = "CHECKING FLUXION SYSTEM...";
     waStatus.textContent = "CHECKING...";
 
     try {
-      const response = await fetch(`${API_URL}/api/status`, {
-        method: "GET",
-        cache: "no-store"
-      });
-
-      if (!response.ok) {
-        throw new Error("Backend unavailable");
-      }
+      const response = await fetch(
+        `${API_URL}/api/whatsapp/check`,
+        { cache: "no-store" }
+      );
 
       const data = await response.json();
 
-      if (data.whatsapp !== "CONFIGURED") {
-        waStatus.textContent = "NOT CONFIGURED";
+      if (!response.ok || !data.success) {
+        waStatus.textContent = "NOT VERIFIED";
         message.textContent =
-          "WhatsApp Business API configuration is incomplete.";
+          "FLUXION backend is online, but WhatsApp API access is not verified yet.";
         return;
       }
 
-      waStatus.textContent = "CONFIGURED";
-
+      waStatus.textContent = "API VERIFIED";
       message.textContent =
-        "Backend verified successfully. WhatsApp Business connection still needs to be authorized.";
+        "WhatsApp Business API access verified. This does not connect a personal WhatsApp account.";
 
     } catch (error) {
       console.error("FLUXION:", error);
-
       waStatus.textContent = "OFFLINE";
       message.textContent =
-        "Could not connect to FLUXION backend. Please try again.";
+        "Unable to check WhatsApp API. Please try again later.";
     } finally {
       connectBtn.disabled = false;
     }
   });
 }
+
