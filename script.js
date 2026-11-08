@@ -16,8 +16,7 @@ if (connectBtn && phoneInput && message && waStatus) {
     }
 
     if (!/^\+[1-9]\d{7,14}$/.test(phone)) {
-      message.textContent =
-        "Enter a valid number with country code.";
+      message.textContent = "Enter a valid number with country code.";
       return;
     }
 
@@ -25,10 +24,14 @@ if (connectBtn && phoneInput && message && waStatus) {
     message.textContent = "Checking FLUXION backend...";
 
     try {
-      const response = await fetch(`${API_URL}/api/status`);
+      const response = await fetch(`${API_URL}/api/status`, {
+        method: "GET",
+        mode: "cors",
+        cache: "no-store"
+      });
 
       if (!response.ok) {
-        throw new Error("Backend unavailable");
+        throw new Error(`HTTP error: ${response.status}`);
       }
 
       const data = await response.json();
@@ -38,9 +41,11 @@ if (connectBtn && phoneInput && message && waStatus) {
         "Backend connected. WhatsApp pairing is not configured yet.";
 
     } catch (error) {
+      console.error("FLUXION connection error:", error);
+
       waStatus.textContent = "OFFLINE";
       message.textContent =
-        "Could not connect to FLUXION backend.";
+        "Could not connect to FLUXION backend. Please try again.";
     } finally {
       connectBtn.disabled = false;
     }
