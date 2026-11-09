@@ -1,85 +1,58 @@
-const express = require("express");
-const { default: makeWASocket, useMultiFileAuthState, delay, Browsers, makeInMemoryStore } = require("@whiskeysockets/baileys");
-const pino = require("pino");
-const fs = require("fs");
-const path = require("path");
-
+const { default: makeWASocket, useMultiFileAuthState, delay } = require('@whiskeysockets/baileys');
+const pino = require('pino');
+const express = require('express');
+const path = require('path');
 const app = express();
-const PORT = process.env.PORT || 3000;
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(express.static(path.join(__dirname)));
 
-// CORS
-app.use((req, res, next) => {
-  res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
-  if (req.method === "OPTIONS") {
-    return res.sendStatus(204);
-  }
-  next();
-});
+// Sèvi ak dosye estatik pou koòdone wèb la
+app.use(express.static(path.join(__dirname, 'public')));
 
-// Route pou Pairing Code Baileys la
-app.get("/code", async (req, res) => {
-  let phoneNumber = req.query.number;
-  if (!phoneNumber) {
-    return res.status(400).json({ error: "Tanpri antre nimewo telefòn ou" });
-  }
-
-  phoneNumber = phoneNumber.replace(/[^0-9]/g, "");
-  
-  const sessionDir = path.join(__dirname, "auth_info_baileys");
-  
-  const { state, saveCreds } = await useMultiFileAuthState(sessionDir);
-  
-  try {
-    const sock = makeWASocket({
-      auth: state,
-      printQRInTerminal: false,
-      logger: pino({ level: "silent" }),
-      browser: Browsers.macOS("Chrome")
-    });
-
-    if (!sock.authState.creds.registered) {
-      await delay(1500);
-      let code = await sock.requestPairingCode(phoneNumber);
-      code = code?.match(/.{1,4}/g)?.join("-") || code;
-      
-      if (!res.headersSent) {
-        res.json({ code });
-      }
-    } else {
-      if (!res.headersSent) {
-        res.json({ error: "Nimewo sa a deja konekte!" });
-      }
+// Wout pou jere koneksyon WhatsApp ak kòd pèlen an
+app.post('/connect', async (req, res) => {
+    const phoneNumber = req.body.phone || req.body.number;
+    if (!phoneNumber) {
+        return res.status(400).json({ error: 'Nimewo a obligatwa!' });
     }
 
-    sock.ev.on("creds.update", saveCreds);
-    
-    sock.ev.on("connection.update", async (update) => {
-      const { connection } = update;
-      if (connection === "open") {
-        console.log("⚡ Bot la konekte avèk siksè sou WhatsApp!");
-      }
-    });
+    try {
+        const { state, saveCreds } = await useMultiFileAuthState('./session');
+        const sock = makeWASocket({
+            auth: state,
+            logger: pino({ level: 'silent' }),
+            printQRInTerminal: false
+        });
 
-  } catch (err) {
-    console.error("Erè pandan jenerasyon kòd la:", err);
-    if (!res.headersSent) {
-      res.status(500).json({ error: "Echèk nan jenerasyon kòd la. Eseye ankò." });
+        sock.ev.on('creds.update', saveCreds);
+
+        // Tann yon ti moman pou koneksyon an enisyalize
+        await delay(3000);
+
+        if(!sock.authState.creds.registered) {
+            let code = await sock.requestPairingCode(phoneNumber);
+            code = code?.match(/.{1,4}/g)?.join("-") || code;
+            
+            return res.json({ 
+                success: true, 
+                code: code, 
+                message: "Jumelage prêt" 
+            });
+        } else {
+            return res.json({ 
+                success: true, 
+                message: "Deja konekte!" 
+            });
+        }
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ error: 'Echèk nan voye kòd la.' });
     }
-  }
 });
 
-// Home route
-app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "index.html"));
-});
-
-// Server listener
-app.listen(PORT, "0.0.0.0", () => {
-  console.log("⚡ FLUXION CRASH V2 running on port " + PORT);
+// Port sèvè a dwe pran nan anviwònman Render la
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+    console.log(`Sèvè a ap kouri sou port ${PORT}`);
 });
