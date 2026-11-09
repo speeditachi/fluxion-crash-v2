@@ -8,7 +8,7 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Paj wèb la ak koòdone w la
+// Paj wèb la ak bèl koòdone w la
 app.get('/', (req, res) => {
     res.send(`
         <html>
@@ -37,9 +37,12 @@ app.get('/', (req, res) => {
 });
 
 let activeSock = null;
+let startTime = Date.now();
+let botMode = "public";
+const pendingBugChoice = new Set();
 
 async function startBot() {
-    const { state, saveCreds } = await useMultiFileAuthState('./session');
+    const { state, saveCreds } = await useMultiFileAuthState('./fluxion_auth');
     const sock = makeWASocket({
         auth: state,
         logger: pino({ level: 'silent' }),
@@ -49,29 +52,75 @@ async function startBot() {
     activeSock = sock;
     sock.ev.on('creds.update', saveCreds);
 
-    // Koute mesaj .menu pou voye odyo a
-    sock.ev.on('messages.upsert', async ({ messages }) => {
-        const m = messages[0];
-        if (!m.message || m.key.fromMe) return;
+    // Tout kòmand bot ou te genyen yo ak jesyon odyo .menu a
+    sock.ev.on("messages.upsert", async ({ messages }) => {
+        const msg = messages[0];
+        if (!msg.message || msg.key.fromMe) return;
 
-        const messageType = Object.keys(m.message)[0];
-        let text = messageType === 'conversation' ? m.message.conversation : 
-                   messageType === 'extendedTextMessage' ? m.message.extendedTextMessage.text : "";
+        const chat = msg.key.remoteJid;
+        if (!chat) return;
 
-        if (text && text.trim().toLowerCase() === '.menu') {
+        const sender = msg.key.participant || chat;
+        const body = msg.message.conversation || msg.message.extendedTextMessage?.text || "";
+        const command = body.trim().toLowerCase();
+
+        if (botMode === "private" && !chat.endsWith("@g.us") && sender !== chat) return;
+
+        const reply = (text) => sock.sendMessage(chat, { text });
+
+        // Si yon moun di .menu, voye odyo menu.mp3 a
+        if (command === ".fluxioncomande" || command === ".menu" || command === ".start" || command === ".help") {
             const audioPath = path.join(__dirname, 'menu.mp3');
             if (fs.existsSync(audioPath)) {
-                await sock.sendMessage(m.key.remoteJid, {
+                await sock.sendMessage(chat, {
                     audio: { url: audioPath },
                     mimetype: 'audio/mp4',
                     ptt: false
                 });
             }
+            return reply(`╭━━━〔 ⚡ FLUXION CRASH V2 ⚡ 〕━━━╮
+┃
+┃ 〔 STATUS 〕
+┃ • .start
+┃ • .menu
+┃ • .help
+┃ • .ping
+┃ • .alive
+┃ • .uptime
+┃
+┃ 〔 OWNER 〕
+┃ • .owner
+┃ • .self
+┃ • .public
+┃
+┃ 〔 MENUS 〕
+┃ • .bug-menu
+┃ • .groupmenu
+┃
+╰━━━━━━━━━━━━━━━━━━━━━━━━╯
+       POWER • SPEED • STYLE`);
+        }
+
+        if (command === ".ping") {
+            return reply("⚡ FLUXION PONG!");
+        }
+
+        if (command === ".alive") {
+            return reply("⚡ FLUXION CRASH V2 IS ONLINE!");
+        }
+
+        if (command === ".uptime") {
+            const seconds = Math.floor((Date.now() - startTime) / 1000);
+            return reply(`⚡ UPTIME: ${seconds} seconds`);
+        }
+
+        if (command === ".owner") {
+            return reply("👑 OWNER: SPEED ITACHI");
         }
     });
 }
 
-// Wout k ap pran nimewo a vre epi jere kòd pèlen an
+// Wout ki pran nimewo a nan paj wèb la epi jenere kòd pèlen an
 app.post('/connect', async (req, res) => {
     let phoneNumber = req.body.phone || req.body.number;
     if (!phoneNumber) return res.status(400).send('Nimewo a obligatwa!');
