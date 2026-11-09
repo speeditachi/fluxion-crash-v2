@@ -3,286 +3,376 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FLUXION.ACCOUNT</title>
+    <title>FLUXION CRASH V2 - Speed Itachi</title>
     <style>
-        body { 
-            background: #070207; 
-            color: #fff; 
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-            text-align: center; 
-            padding: 10px; 
-            margin: 0;
+        :root {
+            --bg-deep: #050103;
+            --card-bg: #0c0205;
+            --accent-red: #ff1e38;
+            --accent-glow: rgba(255, 30, 56, 0.35);
+            --neon-green: #00ff66;
+            --text-main: #ffffff;
+            --text-muted: #9c9c9c;
         }
+
+        body {
+            background-color: var(--bg-deep);
+            background-image: 
+                radial-gradient(circle at 50% 0%, rgba(255, 30, 56, 0.15), transparent 60%),
+                radial-gradient(circle at 10% 90%, rgba(100, 0, 20, 0.1), transparent 50%);
+            color: var(--text-main);
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            text-align: center;
+            padding: 15px;
+            margin: 0;
+            min-height: 100vh;
+        }
+
         .header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 15px 20px;
-            font-size: 14px;
-            font-weight: bold;
+            max-width: 440px;
+            margin: 0 auto 10px auto;
+            padding: 10px 5px;
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: 1px;
         }
-        .header-left { color: #ff3333; }
-        .header-right { color: #00ff00; font-size: 12px; }
-        
-        .card { 
-            max-width: 420px; 
-            margin: 15px auto; 
-            padding: 20px; 
-            border: 1px solid #3a111a; 
-            border-radius: 16px; 
-            background: #0f050f; 
-            box-shadow: 0 8px 30px rgba(255, 0, 0, 0.15);
+        .header-left { color: var(--accent-red); text-shadow: 0 0 10px var(--accent-glow); }
+        .header-right { color: var(--neon-green); font-size: 11px; display: flex; align-items: center; gap: 5px; }
+        .header-right::before { content: ''; display: inline-block; width: 6px; height: 6px; background: var(--neon-green); border-radius: 50%; box-shadow: 0 0 8px var(--neon-green); }
+
+        .card {
+            max-width: 420px;
+            margin: 15px auto;
+            padding: 25px 20px;
+            border: 1px solid rgba(255, 30, 56, 0.25);
+            border-radius: 20px;
+            background: var(--card-bg);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8), 0 0 25px rgba(255, 30, 56, 0.08);
+            backdrop-filter: blur(10px);
+            position: relative;
+            overflow: hidden;
         }
-        
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--accent-red), transparent);
+        }
+
+        .image-container {
+            position: relative;
+            width: 100%;
+            height: 320px;
+            border-radius: 14px;
+            overflow: hidden;
+            border: 1px solid rgba(255, 30, 56, 0.4);
+            margin-bottom: 20px;
+            box-shadow: 0 0 20px rgba(255, 30, 56, 0.2);
+        }
+
         .image-banner {
             width: 100%;
-            height: 350px;
+            height: 100%;
             object-fit: cover;
-            border-radius: 12px;
-            border: 1px solid #ff1a1a;
-            margin-bottom: 20px;
-            box-shadow: 0 0 15px rgba(255, 0, 0, 0.3);
-            background: #1a081a;
+            transition: transform 0.5s ease;
+        }
+
+        .image-container:hover .image-banner {
+            transform: scale(1.03);
         }
 
         .lightning {
-            font-size: 40px;
+            font-size: 32px;
             color: #ffcc00;
-            margin: 10px 0;
+            margin: 5px 0;
+            text-shadow: 0 0 15px rgba(255, 204, 0, 0.4);
         }
 
-        h1 { color: #ff1a1a; font-size: 22px; letter-spacing: 1px; margin: 10px 0; }
-        p { color: #aaa; font-size: 13px; line-height: 1.5; }
-        
+        h1 {
+            color: var(--accent-red);
+            font-size: 24px;
+            letter-spacing: 2px;
+            margin: 10px 0 5px 0;
+            text-shadow: 0 0 12px var(--accent-glow);
+        }
+
+        .subtitle {
+            color: var(--text-muted);
+            font-size: 12px;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            margin-bottom: 20px;
+        }
+
         .input-group {
             text-align: left;
-            margin: 15px 0;
-        }
-        .input-group label {
-            display: block;
-            color: #ff1a1a;
-            font-size: 11px;
-            font-weight: bold;
-            letter-spacing: 1.5px;
-            margin-bottom: 8px;
-        }
-        
-        .phone-row {
-            display: flex;
-            gap: 8px;
+            margin: 20px 0 15px 0;
         }
 
-        select, input { 
-            padding: 14px; 
-            font-size: 16px; 
-            border-radius: 12px; 
-            border: 1px solid #ff1a1a33; 
-            background: #16060c; 
-            color: #fff; 
-            box-sizing: border-box; 
+        .input-group label {
+            display: block;
+            color: var(--accent-red);
+            font-size: 10px;
+            font-weight: 800;
+            letter-spacing: 2px;
+            margin-bottom: 8px;
+        }
+
+        .phone-row {
+            display: flex;
+            gap: 10px;
+        }
+
+        select, input {
+            padding: 14px;
+            font-size: 15px;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 30, 56, 0.3);
+            background: rgba(20, 2, 7, 0.8);
+            color: #fff;
+            box-sizing: border-box;
+            outline: none;
+            transition: all 0.3s ease;
         }
 
         select {
-            width: 110px;
+            width: 115px;
             text-align: center;
             font-weight: bold;
             cursor: pointer;
         }
 
-        input { 
-            width: 100%; 
-            text-align: left;
+        input {
+            width: 100%;
             letter-spacing: 1px;
-            font-weight: bold;
+            font-weight: 600;
         }
-        
-        input:focus, select:focus { border-color: #ff1a1a; outline: none; box-shadow: 0 0 10px rgba(255,26,26,0.4); }
 
-        button { 
-            width: 100%; 
-            padding: 15px; 
-            margin-top: 10px; 
-            font-size: 16px; 
-            border-radius: 12px; 
-            border: none; 
-            background: linear-gradient(90deg, #ff1a1a, #990000); 
-            color: white; 
-            cursor: pointer; 
-            font-weight: bold; 
-            letter-spacing: 1.5px;
-            transition: 0.3s;
+        select:focus, input:focus {
+            border-color: var(--accent-red);
+            box-shadow: 0 0 15px var(--accent-glow);
+            background: rgba(30, 3, 10, 0.9);
         }
-        button:hover { opacity: 0.9; box-shadow: 0 0 15px rgba(255,26,26,0.5); }
 
-        .warning {
-            color: #666;
-            font-size: 11px;
-            margin-top: 15px;
+        button.action-btn {
+            width: 100%;
+            padding: 16px;
+            margin-top: 10px;
+            font-size: 15px;
+            border-radius: 12px;
+            border: none;
+            background: linear-gradient(135deg, #ff1e38, #b3001b);
+            color: white;
+            cursor: pointer;
+            font-weight: 800;
+            letter-spacing: 2px;
+            box-shadow: 0 5px 20px rgba(255, 30, 56, 0.4);
+            transition: all 0.3s ease;
+        }
+
+        button.action-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(255, 30, 56, 0.6);
+            filter: brightness(1.1);
+        }
+
+        button.action-btn:active {
+            transform: translateY(0);
+        }
+
+        #result-box {
+            margin-top: 20px;
+            padding: 20px;
+            background: rgba(10, 2, 5, 0.95);
+            border: 1px solid var(--neon-green);
+            border-radius: 14px;
+            display: none;
+            box-shadow: 0 0 25px rgba(0, 255, 102, 0.15);
+            animation: fadeIn 0.4s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        #pairing-code {
+            color: var(--neon-green);
+            font-size: 30px;
+            letter-spacing: 4px;
+            font-weight: 900;
+            margin: 12px 0;
+            background: rgba(0, 0, 0, 0.6);
+            padding: 14px;
+            border-radius: 10px;
+            border: 1px dashed rgba(0, 255, 102, 0.4);
+            word-break: break-all;
+            text-shadow: 0 0 10px rgba(0, 255, 102, 0.3);
         }
 
         .section-title {
-            color: #ff1a1a;
-            font-size: 16px;
-            font-weight: bold;
-            margin: 30px 0 10px 0;
-            letter-spacing: 1px;
+            color: var(--accent-red);
+            font-size: 14px;
+            font-weight: 800;
+            margin: 25px 0 10px 0;
+            letter-spacing: 1.5px;
+            text-align: left;
+            border-left: 3px solid var(--accent-red);
+            padding-left: 8px;
         }
-        
+
+        .step-box {
+            text-align: left;
+            background: rgba(20, 3, 8, 0.6);
+            padding: 12px 15px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            border: 1px solid rgba(255, 30, 56, 0.15);
+        }
+
         .status-row {
             display: flex;
             justify-content: space-between;
             padding: 10px 0;
-            border-bottom: 1px solid #220a12;
-            font-size: 13px;
+            border-bottom: 1px solid rgba(255, 30, 56, 0.1);
+            font-size: 12px;
         }
         .status-row span:last-child { font-weight: bold; }
 
-        #result-box { 
-            margin-top: 20px; 
-            padding: 20px; 
-            background: #16060c; 
-            border: 1px solid #00ff00; 
-            border-radius: 12px; 
-            display: none; 
-            box-shadow: 0 0 20px rgba(0, 255, 0, 0.2);
-        }
-        #pairing-code { 
-            color: #00ff00; 
-            font-size: 28px; 
-            letter-spacing: 3px; 
-            font-weight: bold; 
-            margin: 15px 0; 
-            background: #090205;
-            padding: 12px;
-            border-radius: 8px;
-            border: 1px dashed #00ff00;
-            word-break: break-all;
+        footer {
+            margin-top: 35px;
+            padding: 20px;
+            color: var(--text-muted);
+            font-size: 11px;
         }
 
-        footer {
-            margin-top: 40px;
-            padding: 20px;
-            color: #666;
-            font-size: 12px;
-        }
         .support-btn {
             display: inline-block;
-            margin: 10px 0;
-            padding: 10px 20px;
-            background: #16060c;
-            border: 1px solid #ff1a1a55;
+            margin: 12px 0;
+            padding: 12px 25px;
+            background: rgba(255, 30, 56, 0.1);
+            border: 1px solid rgba(255, 30, 56, 0.4);
             border-radius: 30px;
-            color: #ff1a1a;
+            color: var(--accent-red);
             text-decoration: none;
-            font-weight: bold;
-            font-size: 13px;
-            transition: 0.3s;
+            font-weight: 700;
+            font-size: 12px;
+            letter-spacing: 1px;
+            transition: all 0.3s ease;
         }
+
         .support-btn:hover {
-            background: #ff1a1a;
+            background: var(--accent-red);
             color: #fff;
-            box-shadow: 0 0 15px rgba(255,26,26,0.5);
+            box-shadow: 0 0 20px var(--accent-glow);
         }
     </style>
 </head>
 <body>
 
     <div class="header">
-        <div class="header-left">💀 FLUXION.ACCOUNT ↗</div>
-        <div class="header-right">● SYSTEM ONLINE</div>
+        <div class="header-left">💀 FLUXION.ACCOUNT</div>
+        <div class="header-right">SYSTEM ONLINE</div>
     </div>
 
     <div class="card">
-        <!-- Lyen dirèk pou imaj Itachi a pou l parèt imedyatman sou Vercel -->
-        <img src="https://images.unsplash.com/photo-1578632767115-351597cf2477?w=800" alt="Itachi Banner" class="image-banner">
+        <div class="image-container">
+            <img src="https://images.unsplash.com/photo-1578632767115-351597cf2477?w=800" alt="Itachi Banner" class="image-banner">
+        </div>
 
         <div class="lightning">⚡</div>
-        <p style="color: #666; font-size: 11px; letter-spacing: 2px;">NEXT GENERATION PLATFORM</p>
+        <p class="subtitle">Next Generation Platform</p>
         <h1>FLUXION CRASH V2</h1>
-        <p>A modern platform for managing your FLUXION</p>
+        <p style="color: var(--text-muted); font-size: 12px;">Pouvwa ak Style pou Speed Itachi</p>
 
-        <form id="connect-form" style="margin-top: 25px;">
+        <form id="connect-form" style="margin-top: 20px;">
             <div class="input-group">
                 <label>PHONE NUMBER</label>
                 <div class="phone-row">
                     <select id="country-code">
-                        <option value="+509" selected>🇭🇹 +509</option>
-                        <option value="+1">🇺🇸 +1</option>
-                        <option value="+33">🇫🇷 +33</option>
-                        <option value="+1809">🇩🇴 +1809</option>
-                        <option value="+55">🇧🇷 +55</option>
-                        <option value="+34">🇪🇸 +34</option>
-                        <option value="+52">🇲🇽 +52</option>
-                        <option value="+44">🇬🇧 +44</option>
+                        <option value="509" selected>🇭🇹 +509</option>
+                        <option value="1">🇺🇸 +1</option>
+                        <option value="33">🇫🇷 +33</option>
+                        <option value="1809">🇩🇴 +1809</option>
+                        <option value="55">🇧🇷 +55</option>
+                        <option value="34">🇪🇸 +34</option>
+                        <option value="52">🇲🇽 +52</option>
+                        <option value="44">🇬🇧 +44</option>
                     </select>
-                    <input type="text" id="phone-local" placeholder="509xxxxxxxx" required>
+                    <input type="text" id="phone-local" placeholder="37xxxxxx / 44xxxxxx" required>
                 </div>
             </div>
-            <button type="submit" id="submit-btn">CONTINUE →</button>
+            <button type="submit" id="submit-btn" class="action-btn">CONTINUE →</button>
         </form>
 
         <div id="result-box">
-            <p style="color: #aaa; font-size: 13px; text-transform: uppercase; letter-spacing: 1px;">Your Pairing Code:</p>
+            <p style="color: var(--text-muted); font-size: 12px; text-transform: uppercase; letter-spacing: 1.5px; margin: 0;">Your Pairing Code:</p>
             <div id="pairing-code">------</div>
-            <button type="button" id="copy-btn" style="background: linear-gradient(90deg, #00ff00, #008800); color: #000; font-size: 15px; padding: 12px;">COPY CODE</button>
+            <button type="button" id="copy-btn" class="action-btn" style="background: linear-gradient(135deg, #00ff66, #008833); color: #000; font-size: 14px; padding: 12px; margin-top: 5px; box-shadow: 0 5px 20px rgba(0,255,102,0.3);">COPY CODE</button>
         </div>
 
-        <p class="warning">Never share your password or WhatsApp verification codes.</p>
+        <p style="color: #666; font-size: 10px; margin-top: 15px; letter-spacing: 0.5px;">Never share your password or verification codes.</p>
     </div>
 
     <div class="card">
         <div class="section-title">HOW IT WORKS</div>
-        <p style="color: #666; font-size: 11px; margin-bottom: 15px;">THREE SIMPLE STEPS</p>
+        <p style="color: var(--text-muted); font-size: 11px; margin-bottom: 15px; text-align: left;">Three simple steps to connect</p>
         
-        <div style="text-align: left; background: #16060c; padding: 12px; border-radius: 10px; margin-bottom: 10px; border: 1px solid #3a111a;">
-            <span style="color: #ff1a1a; font-weight: bold; font-size: 14px;">01</span>
-            <span style="color: #fff; font-weight: bold; margin-left: 8px; font-size: 13px;">ENTER YOUR NUMBER</span>
-            <p style="margin: 5px 0 0 22px; font-size: 12px;">Select your country and enter your phone number.</p>
+        <div class="step-box">
+            <span style="color: var(--accent-red); font-weight: 800; font-size: 13px;">01</span>
+            <span style="color: #fff; font-weight: 700; margin-left: 8px; font-size: 12px;">ENTER NUMBER</span>
+            <p style="margin: 4px 0 0 20px; font-size: 11px; color: var(--text-muted);">Select country and input your phone digits.</p>
         </div>
 
-        <div style="text-align: left; background: #16060c; padding: 12px; border-radius: 10px; margin-bottom: 10px; border: 1px solid #3a111a;">
-            <span style="color: #ff1a1a; font-weight: bold; font-size: 14px;">02</span>
-            <span style="color: #fff; font-weight: bold; margin-left: 8px; font-size: 13px;">CONTINUE</span>
-            <p style="margin: 5px 0 0 22px; font-size: 12px;">Check that your phone number is entered correctly.</p>
+        <div class="step-box">
+            <span style="color: var(--accent-red); font-weight: 800; font-size: 13px;">02</span>
+            <span style="color: #fff; font-weight: 700; margin-left: 8px; font-size: 12px;">REQUEST CODE</span>
+            <p style="margin: 4px 0 0 20px; font-size: 11px; color: var(--text-muted);">Click continue to generate your secure pairing code.</p>
         </div>
 
-        <div style="text-align: left; background: #16060c; padding: 12px; border-radius: 10px; border: 1px solid #3a111a;">
-            <span style="color: #ff1a1a; font-weight: bold; font-size: 14px;">03</span>
-            <span style="color: #fff; font-weight: bold; margin-left: 8px; font-size: 13px;">CONNECTION STATUS</span>
-            <p style="margin: 5px 0 0 22px; font-size: 12px;">View the current FLUXION connection status.</p>
+        <div class="step-box" style="margin-bottom: 0;">
+            <span style="color: var(--accent-red); font-weight: 800; font-size: 13px;">03</span>
+            <span style="color: #fff; font-weight: 700; margin-left: 8px; font-size: 12px;">LINK DEVICE</span>
+            <p style="margin: 4px 0 0 20px; font-size: 11px; color: var(--text-muted);">Paste the code into WhatsApp linked devices.</p>
         </div>
     </div>
 
     <div class="card">
         <div class="section-title">SYSTEM STATUS</div>
-        
-        <div class="status-row">
-            <span style="color: #aaa;">WEBSITE</span>
-            <span style="color: #00ff00;">ONLINE</span>
-        </div>
-        <div class="status-row">
-            <span style="color: #aaa;">BACKEND</span>
-            <span style="color: #00ff00;">ONLINE</span>
-        </div>
-        <div class="status-row">
-            <span style="color: #aaa;">PERSONAL WHATSAPP</span>
-            <span id="ws-status" style="color: #ff1a1a;">NOT CONNECTED</span>
-        </div>
-        <div class="status-row" style="border-bottom: none;">
-            <span style="color: #aaa;">VERSION</span>
-            <span style="color: #fff;">2.2.0</span>
+        <div style="margin-top: 10px;">
+            <div class="status-row">
+                <span style="color: var(--text-muted);">WEBSITE (VERCEL)</span>
+                <span style="color: var(--neon-green);">ONLINE</span>
+            </div>
+            <div class="status-row">
+                <span style="color: var(--text-muted);">BACKEND (RENDER)</span>
+                <span style="color: var(--neon-green);">ONLINE</span>
+            </div>
+            <div class="status-row">
+                <span style="color: var(--text-muted);">WHATSAPP SESSION</span>
+                <span id="ws-status" style="color: var(--accent-red);">NOT CONNECTED</span>
+            </div>
+            <div class="status-row" style="border-bottom: none;">
+                <span style="color: var(--text-muted);">VERSION</span>
+                <span style="color: #fff;">2.2.0</span>
+            </div>
         </div>
     </div>
 
     <footer>
-        <p style="color: #ff1a1a; font-weight: bold; font-size: 15px; letter-spacing: 1px;">💀 FLUXION CRASH V2</p>
-        <p style="color: #888; margin: 5px 0;">POWERED BY SPEED ITACHI</p>
+        <p style="color: var(--accent-red); font-weight: 800; font-size: 14px; letter-spacing: 1px; text-shadow: 0 0 10px var(--accent-glow);">💀 FLUXION CRASH V2</p>
+        <p style="color: var(--text-muted); margin: 5px 0; font-size: 11px;">POWERED BY SPEED ITACHI</p>
         
         <a href="https://wa.me/50944618286" target="_blank" class="support-btn">
             🎧 CONTACT SUPPORT
         </a>
         
-        <p style="margin-top: 20px; color: #444;">© 2026 FLUXION. All rights reserved.</p>
+        <p style="margin-top: 20px; color: #444; font-size: 10px;">© 2026 FLUXION. All rights reserved.</p>
     </footer>
 
     <script>
@@ -290,8 +380,13 @@
 
         document.getElementById('connect-form').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const countryCode = document.getElementById('country-code').value;
-            const phoneLocal = document.getElementById('phone-local').value.trim();
+            const countryCode = document.getElementById('country-code').value.replace('+', '').trim();
+            let phoneLocal = document.getElementById('phone-local').value.replace(/[^0-9]/g, '');
+
+            if (phoneLocal.startsWith(countryCode)) {
+                phoneLocal = phoneLocal.substring(countryCode.length);
+            }
+
             const phone = countryCode + phoneLocal;
 
             const btn = document.getElementById('submit-btn');
@@ -312,12 +407,12 @@
 
                 const data = await response.json();
 
-                if (data.success) {
-                    pairingCode.innerText = data.code;
+                if (data.success || data.code) {
+                    pairingCode.innerText = data.code || data.pairingCode;
                     btn.innerText = "CONTINUE →";
                     btn.disabled = false;
                     document.getElementById('ws-status').innerText = "CONNECTED";
-                    document.getElementById('ws-status').style.color = "#00ff00";
+                    document.getElementById('ws-status').style.color = "var(--neon-green)";
                 } else {
                     alert(data.error || "Failed to generate pairing code.");
                     resultBox.style.display = 'none';
