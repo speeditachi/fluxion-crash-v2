@@ -3,15 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FLUXIONS.ACCOUNT</title>
+    <title>FLUXION.ACCOUNT</title>
     <style>
         body { background: #070207; color: #fff; font-family: sans-serif; text-align: center; padding: 20px; }
-        .box { max-width: 400px; margin: 50px auto; padding: 20px; border: 1px solid #e50914; border-radius: 12px; background: #0f050f; }
+        .box { max-width: 400px; margin: auto; padding: 20px; border: 1px solid #e50914; border-radius: 12px; background: #0f050f; }
         input, button { width: 100%; padding: 12px; margin: 10px 0; font-size: 16px; border-radius: 8px; border: none; box-sizing: border-box; }
         input { background: #1a081a; color: #fff; border: 1px solid #e50914; text-align: center; }
         button { background: #e50914; color: white; cursor: pointer; font-weight: bold; }
-        #code-box { display: none; margin-top: 15px; padding: 15px; background: #1a081a; border: 1px solid #00ff00; border-radius: 8px; }
-        #pairing-code { color: #00ff00; font-size: 28px; letter-spacing: 2px; font-weight: bold; margin: 10px 0; }
+        #result-box { margin-top: 15px; display: none; }
     </style>
 </head>
 <body>
@@ -19,27 +18,30 @@
     <div class="box">
         <h2>CONNECT WHATSAPP</h2>
         <form id="connect-form">
-            <input type="text" id="phone" placeholder="+509XXXXXXXX" required>
+            <input type="text" id="phone" placeholder="+50944618286" required>
             <button type="submit" id="submit-btn">CONTINUE →</button>
         </form>
 
-        <div id="code-box">
-            <p style="color:#aaa; font-size:14px;">Kòd Jumelage ou a:</p>
-            <div id="pairing-code">------</div>
-            <button type="button" id="copy-btn" style="background:#00ff00; color:#000;">KOPYE KÒD LA</button>
+        <!-- Kote kòd la pral parèt anba a -->
+        <div id="result-box">
+            <p id="status-text" style="color: #aaa; font-size: 14px;"></p>
         </div>
     </div>
 
     <script>
-        const BACKEND_URL = "https://fluxion-crash-v2-1.onrender.com/connect"; // Lyen Render ou a
+        const BACKEND_URL = "https://fluxion-crash-v2-1.onrender.com/connect";
 
         document.getElementById('connect-form').addEventListener('submit', async (e) => {
             e.preventDefault();
             const phone = document.getElementById('phone').value;
             const btn = document.getElementById('submit-btn');
-            
-            btn.innerText = "Y ap chache kòd la...";
+            const resultBox = document.getElementById('result-box');
+            const statusText = document.getElementById('status-text');
+
+            btn.innerText = "Chaje...";
             btn.disabled = true;
+            resultBox.style.display = 'block';
+            statusText.innerHTML = "Y ap mande kòd la sou WhatsApp...";
 
             try {
                 const response = await fetch(BACKEND_URL, {
@@ -51,26 +53,21 @@
                 const data = await response.json();
 
                 if (data.success) {
-                    document.getElementById('connect-form').style.display = 'none';
-                    document.getElementById('pairing-code').innerText = data.code;
-                    document.getElementById('code-box').style.display='block';
+                    statusText.innerHTML = `
+                        <span style="color: #fff; display: block; margin-bottom: 5px;">Kòd Jumelage ou:</span>
+                        <b style="color: #00ff00; font-size: 24px; letter-spacing: 2px;">${data.code}</b>
+                    `;
                 } else {
-                    alert(data.error || "Echèk nan jenerasyon kòd la.");
-                    btn.innerText = "CONTINUE →";
-                    btn.disabled = false;
+                    statusText.innerHTML = `<span style="color: #e50914;">${data.error || "Echèk."}</span>`;
                 }
+                btn.innerText = "CONTINUE →";
+                btn.disabled = false;
             } catch (err) {
                 console.error(err);
-                alert("Gen yon erè koneksyon ak sèvè a.");
+                statusText.innerHTML = `<span style="color: #e50914;">Erè koneksyon ak sèvè a.</span>`;
                 btn.innerText = "CONTINUE →";
                 btn.disabled = false;
             }
-        });
-
-        document.getElementById('copy-btn').addEventListener('click', () => {
-            const codeText = document.getElementById('pairing-code').innerText;
-            navigator.clipboard.writeText(codeText);
-            alert("Kòd kopye nan memwa telefòn ou!");
         });
     </script>
 </body>
