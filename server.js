@@ -8,12 +8,12 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Paj wèb ak bèl koòdone nwa ak wouj ou a
+// Paj wèb la ak koòdone w la
 app.get('/', (req, res) => {
     res.send(`
         <html>
         <head>
-            <title>FLUXION.ACCOUNT</title>
+            <title>FLUXIONS.ACCOUNT</title>
             <meta name="viewport" content="width=device-width, initial-scale=1">
             <style>
                 body { background: #070207; color: #fff; font-family: sans-serif; text-align: center; padding: 20px; }
@@ -71,7 +71,7 @@ async function startBot() {
     });
 }
 
-// Wout ki pran nimewo a epi voye kòd pèlen an sou ekran an
+// Wout k ap pran nimewo a vre epi jere kòd pèlen an
 app.post('/connect', async (req, res) => {
     let phoneNumber = req.body.phone || req.body.number;
     if (!phoneNumber) return res.status(400).send('Nimewo a obligatwa!');
