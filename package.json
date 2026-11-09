@@ -1,15 +1,14 @@
-
 {
   "name": "fluxion-crash-v2",
   "version": "2.0.0",
   "description": "FLUXION CRASH V2 backend",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js",
-    "bot": "node bot.js"
+    "start": "node server.js"
   },
   "dependencies": {
     "@whiskeysockets/baileys": "^6.7.18",
+    "cors": "^2.8.5",
     "express": "^4.21.2",
     "pino": "^9.6.0"
   }
