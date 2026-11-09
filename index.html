@@ -65,20 +65,37 @@
             letter-spacing: 1.5px;
             margin-bottom: 8px;
         }
-        input { 
-            width: 100%; 
-            padding: 15px; 
-            font-size: 18px; 
+        
+        .phone-row {
+            display: flex;
+            gap: 8px;
+        }
+
+        select, input { 
+            padding: 14px; 
+            font-size: 16px; 
             border-radius: 12px; 
             border: 1px solid #ff1a1a33; 
             background: #16060c; 
             color: #fff; 
             box-sizing: border-box; 
+        }
+
+        select {
+            width: 110px;
             text-align: center;
-            letter-spacing: 2px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        input { 
+            width: 100%; 
+            text-align: left;
+            letter-spacing: 1px;
             font-weight: bold;
         }
-        input:focus { border-color: #ff1a1a; outline: none; box-shadow: 0 0 10px rgba(255,26,26,0.4); }
+        
+        input:focus, select:focus { border-color: #ff1a1a; outline: none; box-shadow: 0 0 10px rgba(255,26,26,0.4); }
 
         button { 
             width: 100%; 
@@ -130,14 +147,15 @@
         }
         #pairing-code { 
             color: #00ff00; 
-            font-size: 30px; 
-            letter-spacing: 4px; 
+            font-size: 28px; 
+            letter-spacing: 3px; 
             font-weight: bold; 
             margin: 15px 0; 
             background: #090205;
             padding: 12px;
             border-radius: 8px;
             border: 1px dashed #00ff00;
+            word-break: break-all;
         }
 
         footer {
@@ -146,8 +164,24 @@
             color: #666;
             font-size: 12px;
         }
-        footer a { color: #ff1a1a; text-decoration: none; font-weight: bold; }
-        footer a:hover { text-decoration: underline; }
+        .support-btn {
+            display: inline-block;
+            margin: 10px 0;
+            padding: 10px 20px;
+            background: #16060c;
+            border: 1px solid #ff1a1a55;
+            border-radius: 30px;
+            color: #ff1a1a;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 13px;
+            transition: 0.3s;
+        }
+        .support-btn:hover {
+            background: #ff1a1a;
+            color: #fff;
+            box-shadow: 0 0 15px rgba(255,26,26,0.5);
+        }
     </style>
 </head>
 <body>
@@ -158,7 +192,6 @@
     </div>
 
     <div class="card">
-        <!-- Asire w imaj ou a rele itachi.jpg epi li nan menm katab sou GitHub -->
         <img src="itachi.jpg" alt="Itachi Banner" class="image-banner">
 
         <div class="lightning">⚡</div>
@@ -169,12 +202,25 @@
         <form id="connect-form" style="margin-top: 25px;">
             <div class="input-group">
                 <label>PHONE NUMBER</label>
-                <input type="text" id="phone" placeholder="+50944618286" required>
+                <div class="phone-row">
+                    <!-- Sèvèktè Peyi ak Ayiti (+509) an premye pa defo -->
+                    <select id="country-code">
+                        <option value="+509" selected>🇭🇹 +509</option>
+                        <option value="+1">🇺🇸 +1</option>
+                        <option value="+33">🇫🇷 +33</option>
+                        <option value="+1809">🇩🇴 +1809</option>
+                        <option value="+55">🇧🇷 +55</option>
+                        <option value="+34">🇪🇸 +34</option>
+                        <option value="+52">🇲🇽 +52</option>
+                        <option value="+44">🇬🇧 +44</option>
+                    </select>
+                    <input type="text" id="phone-local" placeholder="44618286" required>
+                </div>
             </div>
             <button type="submit" id="submit-btn">CONTINUE →</button>
         </form>
 
-        <!-- Kòd jumelage a ap parèt la a anba a ak yon bèl stil -->
+        <!-- Kòd jumelage a ap parèt la a -->
         <div id="result-box">
             <p style="color: #aaa; font-size: 13px; text-transform: uppercase; letter-spacing: 1px;">Your Pairing Code:</p>
             <div id="pairing-code">------</div>
@@ -192,7 +238,7 @@
         <div style="text-align: left; background: #16060c; padding: 12px; border-radius: 10px; margin-bottom: 10px; border: 1px solid #3a111a;">
             <span style="color: #ff1a1a; font-weight: bold; font-size: 14px;">01</span>
             <span style="color: #fff; font-weight: bold; margin-left: 8px; font-size: 13px;">ENTER YOUR NUMBER</span>
-            <p style="margin: 5px 0 0 22px; font-size: 12px;">Enter your phone number with its country code.</p>
+            <p style="margin: 5px 0 0 22px; font-size: 12px;">Select your country and enter your phone number.</p>
         </div>
 
         <div style="text-align: left; background: #16060c; padding: 12px; border-radius: 10px; margin-bottom: 10px; border: 1px solid #3a111a;">
@@ -233,5 +279,68 @@
     <footer>
         <p style="color: #ff1a1a; font-weight: bold; font-size: 15px; letter-spacing: 1px;">💀 FLUXION CRASH V2</p>
         <p style="color: #888; margin: 5px 0;">POWERED BY SPEED ITACHI</p>
-        <p style="margin-top: 10px;"><a href="https://wa.me/50944618286" target="_blank">📞 CONTACT SUPPORT (50944618286)</a></p>
-        <p style="margin-top: 20px; color: #444;">© 2026 FLUXION.
+        
+        <!-- Bèl bouton Contact Support la jan w te vle l la -->
+        <a href="https://wa.me/50944618286" target="_blank" class="support-btn">
+            🎧 CONTACT SUPPORT
+        </a>
+        
+        <p style="margin-top: 20px; color: #444;">© 2026 FLUXION. All rights reserved.</p>
+    </footer>
+
+    <script>
+        const BACKEND_URL = "https://fluxion-crash-v2-1.onrender.com/connect";
+
+        document.getElementById('connect-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const countryCode = document.getElementById('country-code').value;
+            const phoneLocal = document.getElementById('phone-local').value.trim();
+            const phone = countryCode + phoneLocal; // Konbine kòd peyi a ak nimewo a
+
+            const btn = document.getElementById('submit-btn');
+            const resultBox = document.getElementById('result-box');
+            const pairingCode = document.getElementById('pairing-code');
+
+            btn.innerText = "REQUESTING CODE...";
+            btn.disabled = true;
+            resultBox.style.display = 'block';
+            pairingCode.innerText = "LOADING...";
+
+            try {
+                const response = await fetch(BACKEND_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ phone })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    pairingCode.innerText = data.code;
+                    btn.innerText = "CONTINUE →";
+                    btn.disabled = false;
+                    document.getElementById('ws-status').innerText = "CONNECTED";
+                    document.getElementById('ws-status').style.color = "#00ff00";
+                } else {
+                    alert(data.error || "Failed to generate pairing code.");
+                    resultBox.style.display = 'none';
+                    btn.innerText = "CONTINUE →";
+                    btn.disabled = false;
+                }
+            } catch (err) {
+                console.error(err);
+                alert("Connection error with the backend server.");
+                resultBox.style.display = 'none';
+                btn.innerText = "CONTINUE →";
+                btn.disabled = false;
+            }
+        });
+
+        document.getElementById('copy-btn').addEventListener('click', () => {
+            const codeText = document.getElementById('pairing-code').innerText;
+            navigator.clipboard.writeText(codeText);
+            alert("Pairing code copied to clipboard!");
+        });
+    </script>
+</body>
+</html>
