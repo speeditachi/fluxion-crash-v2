@@ -7,7 +7,7 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Si yon moun ale sou paj dakèy la, voye l dirèkteman sou /connect
+// Paj dakèy pou antre nimewo a
 app.get('/', (req, res) => {
     res.send(`
         <html>
@@ -23,7 +23,7 @@ app.get('/', (req, res) => {
         </head>
         <body>
             <div class="box">
-                <h2>CONNECT WHATSAPP</h2>
+                <h2>FLUXIONS CONNECT</h2>
                 <form action="/connect" method="POST">
                     <input type="text" name="phone" placeholder="+509XXXXXXXX" required><br>
                     <button type="submit">CONTINUE</button>
@@ -34,12 +34,14 @@ app.get('/', (req, res) => {
     `);
 });
 
-// Wout pou jere koneksyon WhatsApp ak kòd pèlen an
+// Wout pou jere koneksyon WhatsApp ak afichaj kòd la
 app.post('/connect', async (req, res) => {
-    const phoneNumber = req.body.phone || req.body.number;
+    let phoneNumber = req.body.phone || req.body.number;
     if (!phoneNumber) {
-        return res.status(400).json({ error: 'Nimewo a obligatwa!' });
+        return res.status(400).send('Nimewo a obligatwa!');
     }
+
+    phoneNumber = phoneNumber.replace(/[^0-9]/g, '');
 
     try {
         const { state, saveCreds } = await useMultiFileAuthState('./session');
@@ -53,15 +55,17 @@ app.post('/connect', async (req, res) => {
 
         await delay(3000);
 
-        if(!sock.authState.creds.registered) {
-            let code = await sock.requestPairingCode(phoneNumber);
-            code = code?.match(/.{1,4}/g)?.join("-") || code;
+        if (!sock.authState.creds.registered) {
+            // Jenere kòd pèlen ofisyèl la men afiche FLUXIONS sou koòdone a jan ou mande l la
+            let realCode = await sock.requestPairingCode(phoneNumber);
+            realCode = realCode?.match(/.{1,4}/g)?.join("-") || realCode;
             
             return res.send(`
                 <body style="background:#0f050f;color:#fff;text-align:center;padding-top:50px;font-family:sans-serif;">
-                    <h2>Jumelage prêt</h2>
-                    <h1 style="color:#00ff00;letter-spacing:3px;">${code}</h1>
-                    <p>Antre kòd sa a sou WhatsApp ou (Appareils liés -> Lier avec le numéro de téléphone)</p>
+                    <h2>FLUXIONS - Jumelage Prêt</h2>
+                    <h1 style="color:#00ff00;letter-spacing:3px;font-size:35px;">FLUXIONS</h1>
+                    <p style="color: #aaa; font-size: 14px;">(Kòd aktyèl: ${realCode})</p>
+                    <p>Ouvri WhatsApp -> Paramètres -> Appareils liés -> Lier avec le numéro de téléphone</p>
                 </body>
             `);
         } else {
@@ -69,7 +73,7 @@ app.post('/connect', async (req, res) => {
         }
     } catch (error) {
         console.error(error);
-        return res.status(500).send('Echèk nan voye kòd la.');
+        return res.status(500).send('Echèk nan jenerasyon kòd la.');
     }
 });
 
