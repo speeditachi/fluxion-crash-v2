@@ -12,9 +12,12 @@ app.use(cors());
 
 let activeSock = null;
 let startTime = Date.now();
-let botMode = "public";
+let isInitializing = false;
 
 async function startBot() {
+    if (isInitializing && activeSock) return activeSock;
+    isInitializing = true;
+
     const { state, saveCreds } = await useMultiFileAuthState('./fluxion_auth');
     const sock = makeWASocket({
         auth: state,
@@ -24,6 +27,13 @@ async function startBot() {
 
     activeSock = sock;
     sock.ev.on('creds.update', saveCreds);
+
+    sock.ev.on('connection.update', async (update) => {
+        const { connection } = update;
+        if (connection === 'open') {
+            console.log('⚡ FLUXION BOT CONNECTED SUCCESSFULLY!');
+        }
+    });
 
     // Koute kòmand .menu pou voye odyo a sou WhatsApp
     sock.ev.on("messages.upsert", async ({ messages }) => {
@@ -66,7 +76,8 @@ async function startBot() {
 ┃ • .groupmenu
 ┃
 ╰━━━━━━━━━━━━━━━━━━━━━━━━╯
-       POWER • SPEED • STYLE`);
+ 
+POWER • SPEED • STYLE`);
         }
 
         if (command === ".ping") return reply("⚡ FLUXION PONG!");
@@ -77,9 +88,12 @@ async function startBot() {
         }
         if (command === ".owner") return reply("👑 OWNER: SPEED ITACHI");
     });
+
+    isInitializing = false;
+    return sock;
 }
 
-// Wout API pou bay Vercel kòd la dirèkteman
+// Wout API pou bay kòd la san erè
 app.post('/connect', async (req, res) => {
     let phoneNumber = req.body.phone || req.body.number;
     if (!phoneNumber) return res.status(400).json({ success: false, error: 'Nimewo a obligatwa!' });
@@ -87,8 +101,21 @@ app.post('/connect', async (req, res) => {
     phoneNumber = phoneNumber.replace(/[^0-9]/g, '');
 
     try {
-        startBot();
-        await delay(4000);
+        if (!activeSock || !activeSock.authState.creds.registered) {
+            // Efase ansyen dosye sesyon an si l te bloke sou yon vye koneksyon ki kase
+            if (fs.existsSync('./fluxion_auth')) {
+                fs.rmSync('./fluxion_auth', { recursive: true, force: true });
+            }
+            
+            await startBot();
+            // Bay socket la tan pou l konekte ak rezo WhatsApp la
+            let retries = 10;
+            while (retries > 0) {
+                await delay(2000);
+                if (activeSock && activeSock.ws && activeSock.ws.isOpen) break;
+                retries--;
+            }
+        }
 
         if (activeSock && !activeSock.authState.creds.registered) {
             let code = await activeSock.requestPairingCode(phoneNumber);
@@ -96,7 +123,7 @@ app.post('/connect', async (req, res) => {
             
             return res.json({ success: true, code: code });
         } else {
-            return res.json({ success: false, error: 'Bot la deja konekte oswa li ap chaje!' });
+            return res.json({ success: false, error: 'Bot la deja konekte sou yon lòt sesyon!' });
         }
     } catch (error) {
         console.error(error);
