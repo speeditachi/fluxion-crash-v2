@@ -1,4 +1,3 @@
-
 const connectBtn = document.getElementById("connectBtn");
 const phoneInput = document.getElementById("phone");
 const message = document.getElementById("message");
@@ -8,46 +7,51 @@ const API_URL = "https://fluxion-crash-v2.onrender.com";
 
 if (connectBtn && phoneInput && message && waStatus) {
   connectBtn.addEventListener("click", async () => {
-    const phone = phoneInput.value.trim();
+    let phone = phoneInput.value.trim();
 
-    if (!/^\+[1-9]\d{7,14}$/.test(phone)) {
-      message.textContent =
-        "Enter a valid phone number with country code.";
+    // Retire nenpòt siy plis (+) oswa espas paske Baileys bezwen l san "+"
+    phone = phone.replace(/[^0-9]/g, "");
+
+    if (!phone || phone.length < 8) {
+      message.textContent = "Antre yon nimewo telefòn valab (eg: 50944618286).";
       phoneInput.focus();
       return;
     }
 
     connectBtn.disabled = true;
-    message.textContent = "CHECKING FLUXION SYSTEM...";
-    waStatus.textContent = "CHECKING...";
+    message.textContent = "Ap mande Pairing Code sou FLUXION...";
+    waStatus.textContent = "MANDÈ...";
 
     try {
-      const response = await fetch(
-        `${API_URL}/api/whatsapp/check`,
-        { cache: "no-store" }
-      );
+      // Chanje endpoint la pou l al sou route ki jere pairing code la nan backend ou an
+      const response = await fetch(`${API_URL}/pair`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ phone: phone })
+      });
 
       const data = await response.json();
 
       if (!response.ok || !data.success) {
-        waStatus.textContent = "NOT VERIFIED";
-        message.textContent =
-          "FLUXION backend is online, but WhatsApp API access is not verified yet.";
+        waStatus.textContent = "ECHÈC";
+        message.textContent = data.error || "Echèk nan mande kòd la. Eseye ankò.";
         return;
       }
 
-      waStatus.textContent = "API VERIFIED";
-      message.textContent =
-        "WhatsApp Business API access verified. This does not connect a personal WhatsApp account.";
+      waStatus.textContent = "KÒD JENE";
+      message.textContent = `Kòd ou a se: ${data.code}. Antre l sou WhatsApp vit!`;
+      
+      // Si w gen yon eleman pou afiche kòd la sou ekran an:
+      // document.getElementById("pairingCodeDisplay").textContent = data.code;
 
     } catch (error) {
       console.error("FLUXION:", error);
       waStatus.textContent = "OFFLINE";
-      message.textContent =
-        "Unable to check WhatsApp API. Please try again later.";
+      message.textContent = "Echèk koneksyon ak sèvè a. Eseye ankò pita.";
     } finally {
       connectBtn.disabled = false;
     }
   });
 }
-
