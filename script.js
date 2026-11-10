@@ -1,57 +1,63 @@
-const connectBtn = document.getElementById("connectBtn");
-const phoneInput = document.getElementById("phone");
-const message = document.getElementById("message");
-const waStatus = document.getElementById("waStatus");
+const { default: makeWASocket, useMultiFileAuthState, fetchLatestBaileysVersion, Browsers } = require('@whiskeysockets/baileys');
+const express = require('express');
+const cors = require('cors');
 
-const API_URL = "https://fluxion-crash-v2.onrender.com";
+const app = express();
+const PORT = process.env.PORT || 3000;
 
-if (connectBtn && phoneInput && message && waStatus) {
-  connectBtn.addEventListener("click", async () => {
-    let phone = phoneInput.value.trim();
+app.use(cors());
+app.use(express.json());
 
-    // Retire nenpòt siy plis (+) oswa espas paske Baileys bezwen l san "+"
-    phone = phone.replace(/[^0-9]/g, "");
+// Route de baz pou tcheke si sèvè a ap mache
+app.get('/', (req, res) => {
+    res.send("FLUXION BUG BOT Backend is running!");
+});
 
-    if (!phone || phone.length < 8) {
-      message.textContent = "Antre yon nimewo telefòn valab (eg: 50944618286).";
-      phoneInput.focus();
-      return;
+// Route pou jenere Pairing Code la
+app.post('/pair', async (req, res) => {
+    let { phone } = req.body;
+    if (!phone) {
+        return res.status(400).json({ success: false, error: "Nimewo telefòn lan obligatwa" });
     }
 
-    connectBtn.disabled = true;
-    message.textContent = "Ap mande Pairing Code sou FLUXION...";
-    waStatus.textContent = "MANDÈ...";
+    // Netwaye nimewo a
+    phone = phone.replace(/[^0-9]/g, '');
 
     try {
-      // Chanje endpoint la pou l al sou route ki jere pairing code la nan backend ou an
-      const response = await fetch(`${API_URL}/pair`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({ phone: phone })
-      });
+        const { state, saveCreds } = await useMultiFileAuthState('auth_info_baileys');
+        const { version } = await fetchLatestBaileysVersion();
 
-      const data = await response.json();
+        const sock = makeWASocket({
+            version,
+            auth: state,
+            printQRInTerminal: false,
+            browser: Browsers.ubuntu('Chrome'), // Sa anpeche WhatsApp bloke Render
+            connectTimeoutMs: 60000,
+            defaultQueryTimeoutMs: 0
+        });
 
-      if (!response.ok || !data.success) {
-        waStatus.textContent = "ECHÈC";
-        message.textContent = data.error || "Echèk nan mande kòd la. Eseye ankò.";
-        return;
-      }
+        sock.ev.on('creds.update', saveCreds);
 
-      waStatus.textContent = "KÒD JENE";
-      message.textContent = `Kòd ou a se: ${data.code}. Antre l sou WhatsApp vit!`;
-      
-      // Si w gen yon eleman pou afiche kòd la sou ekran an:
-      // document.getElementById("pairingCodeDisplay").textContent = data.code;
+        // Bay Baileys yon ti tan pou l limen kòrèkteman anvan l mande kòd la
+        setTimeout(async () => {
+            try {
+                let code = await sock.requestPairingCode(phone);
+                // Mete yon tirè nan mitan l pou l ka pi fasil pou lekti (pa egzanp: SC9N-P1NH)
+                code = code?.match(/.{1,4}/g)?.join("-") || code;
+                
+                return res.json({ success: true, code });
+            } catch (err) {
+                console.error("Erè nan requestPairingCode:", err);
+                return res.status(500).json({ success: false, error: "Echèk nan jenerasyon kòd la sou WhatsApp" });
+            }
+        }, 3000);
 
     } catch (error) {
-      console.error("FLUXION:", error);
-      waStatus.textContent = "OFFLINE";
-      message.textContent = "Echèk koneksyon ak sèvè a. Eseye ankò pita.";
-    } finally {
-      connectBtn.disabled = false;
+        console.error("Erè sèvè:", error);
+        res.status(500).json({ success: false, error: "Erè entèn nan sèvè a" });
     }
-  });
-}
+});
+
+app.listen(PORT, () => {
+    console.log(`Sèvè FLUXION ap kouri sou pò ${PORT}`);
+});
