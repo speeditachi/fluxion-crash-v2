@@ -22,7 +22,8 @@ async function startBot() {
     const sock = makeWASocket({
         auth: state,
         logger: pino({ level: 'silent' }),
-        printQRInTerminal: false
+        printQRInTerminal: false,
+        browser: ["Chrome (Linux)", "", ""]
     });
 
     activeSock = sock;
@@ -32,6 +33,10 @@ async function startBot() {
         const { connection } = update;
         if (connection === 'open') {
             console.log('⚡ FLUXION BOT CONNECTED SUCCESSFULLY!');
+        }
+        if (connection === 'close') {
+            isInitializing = false;
+            activeSock = null;
         }
     });
 
@@ -101,33 +106,37 @@ app.post('/connect', async (req, res) => {
     phoneNumber = phoneNumber.replace(/[^0-9]/g, '');
 
     try {
+        // Si pa gen socket aktif oswa li pa anrejistre, n ap re-kreye l pwòp
         if (!activeSock || !activeSock.authState.creds.registered) {
-            // Efase ansyen dosye sesyon an si l te bloke sou yon vye koneksyon ki kase
             if (fs.existsSync('./fluxion_auth')) {
                 fs.rmSync('./fluxion_auth', { recursive: true, force: true });
             }
             
             await startBot();
-            // Bay socket la tan pou l konekte ak rezo WhatsApp la
-            let retries = 10;
+            
+            // Tann jiskaske koneksyon an louvri nèt sou rezo a
+            let retries = 15;
             while (retries > 0) {
-                await delay(2000);
+                await delay(3000);
                 if (activeSock && activeSock.ws && activeSock.ws.isOpen) break;
                 retries--;
             }
         }
 
         if (activeSock && !activeSock.authState.creds.registered) {
+            // Nou pa mete tirè pou l ka soti ak bèl kòd pwòp ki pa lakòz erè sou WhatsApp
             let code = await activeSock.requestPairingCode(phoneNumber);
-            code = code?.match(/.{1,4}/g)?.join("-") || code;
-            
             return res.json({ success: true, code: code });
         } else {
             return res.json({ success: false, error: 'Bot la deja konekte sou yon lòt sesyon!' });
         }
     } catch (error) {
-        console.error(error);
-        return res.status(500).json({ success: false, error: 'Echèk nan jenerasyon kòd la.' });
+        console.error("Erè nan pairing:", error);
+        if (fs.existsSync('./fluxion_auth')) {
+            fs.rmSync('./fluxion_auth', { recursive: true, force: true });
+        }
+        activeSock = null;
+        return res.status(500).json({ success: false, error: 'Echèk nan jenerasyon kòd la. Eseye ankò.' });
     }
 });
 
