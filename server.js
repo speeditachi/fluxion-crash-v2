@@ -98,7 +98,7 @@ POWER • SPEED • STYLE`);
     return sock;
 }
 
-// Wout API pou bay kòd la san erè
+// Wout API pou bay kòd la ak bon jesyon tan ak koneksyon
 app.post('/connect', async (req, res) => {
     let phoneNumber = req.body.phone || req.body.number;
     if (!phoneNumber) return res.status(400).json({ success: false, error: 'Nimewo a obligatwa!' });
@@ -106,37 +106,47 @@ app.post('/connect', async (req, res) => {
     phoneNumber = phoneNumber.replace(/[^0-9]/g, '');
 
     try {
-        // Si pa gen socket aktif oswa li pa anrejistre, n ap re-kreye l pwòp
-        if (!activeSock || !activeSock.authState.creds.registered) {
-            if (fs.existsSync('./fluxion_auth')) {
-                fs.rmSync('./fluxion_auth', { recursive: true, force: true });
-            }
-            
-            await startBot();
-            
-            // Tann jiskaske koneksyon an louvri nèt sou rezo a
-            let retries = 15;
-            while (retries > 0) {
-                await delay(3000);
-                if (activeSock && activeSock.ws && activeSock.ws.isOpen) break;
-                retries--;
+        // Toujou netwaye ansyen sesyon an pou nou pati sou a zewo pwòp
+        if (fs.existsSync('./fluxion_auth')) {
+            fs.rmSync('./fluxion_auth', { recursive: true, force: true });
+        }
+        
+        activeSock = null;
+        await startBot();
+
+        // N ap tann jiskaske koneksyon an louvri nèt sou rezo a
+        console.log("Ap tann koneksyon ouvri pou nimewo:", phoneNumber);
+        
+        let connected = false;
+        for (let i = 0; i < 20; i++) {
+            await delay(1000);
+            if (activeSock && activeSock.ws && activeSock.ws.isOpen) {
+                connected = true;
+                break;
             }
         }
 
-        if (activeSock && !activeSock.authState.creds.registered) {
-            // Nou pa mete tirè pou l ka soti ak bèl kòd pwòp ki pa lakòz erè sou WhatsApp
-            let code = await activeSock.requestPairingCode(phoneNumber);
-            return res.json({ success: true, code: code });
-        } else {
-            return res.json({ success: false, error: 'Bot la deja konekte sou yon lòt sesyon!' });
+        if (!connected) {
+            throw new Error("Koneksyon ak sèvè WhatsApp la pran twò lontan.");
         }
+
+        // Lè koneksyon an louvri nèt, nou bay yon ti tan pou estrikti a estabilize
+        await delay(2000); 
+        let code = await activeSock.requestPairingCode(phoneNumber);
+        
+        if (!code) {
+            throw new Error("WhatsApp pa t retounen oken kòd.");
+        }
+
+        return res.json({ success: true, code: code });
+
     } catch (error) {
         console.error("Erè nan pairing:", error);
         if (fs.existsSync('./fluxion_auth')) {
             fs.rmSync('./fluxion_auth', { recursive: true, force: true });
         }
         activeSock = null;
-        return res.status(500).json({ success: false, error: 'Echèk nan jenerasyon kòd la. Eseye ankò.' });
+        return res.status(500).json({ success: false, error: error.message || 'Echèk nan jenerasyon kòd la.' });
     }
 });
 
