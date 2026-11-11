@@ -82,14 +82,13 @@ h1 span{color:var(--red)}
 .section-subtitle{font-size:10px;color:#888;margin-top:-10px;margin-bottom:18px}
 .input-group{text-align:left;margin-bottom:17px}
 label{display:block;color:#ff718b;font-size:10px;font-weight:bold;letter-spacing:1.5px;margin-bottom:9px}
-.phone-row{display:flex;gap:8px}
-input,select{
+.input-hint{font-size:10px;color:#888;margin-top:6px;display:block}
+input{
  background:#09060b;border:1px solid #4b1828;
- color:white;border-radius:10px;padding:14px 10px;outline:none;
+ color:white;border-radius:10px;padding:14px 12px;outline:none;
+ width:100%;min-width:0;
 }
-select{width:115px}
-input{width:100%;min-width:0}
-input:focus,select:focus{border-color:var(--red);box-shadow:0 0 12px #ff174433}
+input:focus{border-color:var(--red);box-shadow:0 0 12px #ff174433}
 .main-btn{
  width:100%;padding:16px;border:0;border-radius:11px;
  color:white;background:linear-gradient(100deg,#ff1744,#a00029);
@@ -218,20 +217,9 @@ footer p{font-size:11px;color:#888;margin-top:10px}
   <p class="section-subtitle">CONNECT YOUR PERSONAL WHATSAPP</p>
   <form id="connect-form">
    <div class="input-group">
-    <label>PHONE NUMBER</label>
-    <div class="phone-row">
-     <select id="country-code">
-      <option value="+509">🇭🇹 +509</option>
-      <option value="+1">🇺🇸 +1</option>
-      <option value="+33">🇫🇷 +33</option>
-      <option value="+1809">🇩🇴 +1809</option>
-      <option value="+55">🇧🇷 +55</option>
-      <option value="+34">🇪🇸 +34</option>
-      <option value="+52">🇲🇽 +52</option>
-      <option value="+44">🇬🇧 +44</option>
-     </select>
-     <input type="tel" id="phone-local" placeholder="Phone number" required>
-    </div>
+    <label for="phone-full">PHONE NUMBER (WITHOUT +)</label>
+    <input type="tel" id="phone-full" placeholder="Ex: 50944618286" required>
+    <span class="input-hint">Enter country code + number without spaces or + (e.g. 50944618286)</span>
    </div>
    <button type="submit" class="main-btn" id="submit-btn">
     GENERATE PAIRING CODE →
@@ -261,7 +249,7 @@ footer p{font-size:11px;color:#888;margin-top:10px}
   <p class="section-subtitle">THREE SIMPLE STEPS</p>
   <div class="step">
    <div class="step-number">01</div>
-   <div><h3>ENTER YOUR NUMBER</h3><p>Select your country code and enter your phone number.</p></div>
+   <div><h3>ENTER YOUR NUMBER</h3><p>Enter your country code and phone number without the + sign (e.g. 50944618286).</p></div>
   </div>
   <div class="step">
    <div class="step-number">02</div>
@@ -337,15 +325,17 @@ const pairingCode=document.getElementById("pairing-code");
 const qrContainer=document.getElementById("qr-container");
 const qrElement=document.getElementById("qrcode");
 const copyMessage=document.getElementById("copy-message");
+
 form.addEventListener("submit",async e=>{
  e.preventDefault();
- const country=document.getElementById("country-code").value;
- const local=document.getElementById("phone-local").value.replace(/\D/g,"").replace(/^0+/,"");
- if(!local){
-  alert("Enter a valid phone number.");
+ // Retire tout espas, siy +, oswa lèt pou l kite chif yo sèlman (ex: 50944618286)
+ const phone=document.getElementById("phone-full").value.replace(/\D/g,"").replace(/^0+/,"");
+ 
+ if(!phone || phone.length < 8){
+  alert("Enter a valid phone number with country code (ex: 50944618286).");
   return;
  }
- const phone=country+local;
+
  submitBtn.disabled=true;
  submitBtn.textContent="REQUESTING CODE...";
  resultBox.style.display="block";
