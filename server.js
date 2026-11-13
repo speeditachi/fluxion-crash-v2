@@ -22,7 +22,8 @@ async function startBot() {
     const sock = makeWASocket({
         auth: state,
         logger: pino({ level: 'silent' }),
-        printQRInTerminal: false
+        printQRInTerminal: false,
+        browser: ["Chrome (Linux)", "Chrome", "115.0.0.0"] // Pwoteje kont bloke sou WhatsApp
     });
 
     activeSock = sock;
@@ -92,7 +93,7 @@ POWER • SPEED • STYLE`);
     return sock;
 }
 
-// Wout API pou jere koneksyon an san erè de sesyon ki kwense
+// Wout API pou jere koneksyon an san erè
 app.post('/connect', async (req, res) => {
     let phoneNumber = req.body.phone || req.body.number;
     if (!phoneNumber) return res.status(400).json({ success: false, error: 'Nimewo a obligatwa!' });
@@ -136,6 +137,4 @@ app.post('/connect', async (req, res) => {
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-    console.log(`Sèvè a ap kouri sou port ${PORT}`);
-});
+app.listen
