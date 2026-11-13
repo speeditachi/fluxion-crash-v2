@@ -22,16 +22,20 @@ async function startBot() {
     const sock = makeWASocket({
         auth: state,
         logger: pino({ level: 'silent' }),
-        printQRInTerminal: false
+        printQRInTerminal: false,
+        browser: ["Chrome (Linux)", "Chrome", "115.0.0.0"] // Enpòtan pou WhatsApp pa rejte koneksyon an
     });
 
     activeSock = sock;
     sock.ev.on('creds.update', saveCreds);
 
     sock.ev.on('connection.update', async (update) => {
-        const { connection } = update;
+        const { connection, lastDisconnect } = update;
         if (connection === 'open') {
             console.log('⚡ FLUXION BOT CONNECTED SUCCESSFULLY!');
+        } else if (connection === 'close') {
+            console.log('❌ Koneksyon an fèmen, n ap re-inisyalize...');
+            isInitializing = false;
         }
     });
 
@@ -92,7 +96,7 @@ POWER • SPEED • STYLE`);
     return sock;
 }
 
-// Wout API pou jere koneksyon an san erè de sesyon ki kwense
+// Wout API pou jere koneksyon an byen dousman san erè
 app.post('/connect', async (req, res) => {
     let phoneNumber = req.body.phone || req.body.number;
     if (!phoneNumber) return res.status(400).json({ success: false, error: 'Nimewo a obligatwa!' });
@@ -113,7 +117,8 @@ app.post('/connect', async (req, res) => {
 
         await startBot();
 
-        let retries = 15;
+        // Bay socket la plis tan pou l louvri koneksyon an avèk rezo a san pèdi tan
+        let retries = 25; 
         while (retries > 0) {
             await delay(2000);
             if (activeSock && activeSock.ws && activeSock.ws.isOpen) break;
