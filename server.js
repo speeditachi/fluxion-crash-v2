@@ -96,7 +96,16 @@ POWER • SPEED • STYLE`);
     return sock;
 }
 
-// Wout API pou jere koneksyon an byen dousman san erè
+// Ti fonksyon ki mete yon limit tan sou nenpòt pwomès (anpeche sèvè a rete bloke pou tout tan)
+function withTimeout(promise, ms, timeoutMsg) {
+    let timer;
+    const timeout = new Promise((_, reject) => {
+        timer = setTimeout(() => reject(new Error(timeoutMsg)), ms);
+    });
+    return Promise.race([promise, timeout]).finally(() => clearTimeout(timer));
+}
+
+// Wout API pou jere koneksyon an byen vit, san rete bloke
 app.post('/connect', async (req, res) => {
     let phoneNumber = req.body.phone || req.body.number;
     if (!phoneNumber) return res.status(400).json({ success: false, error: 'Nimewo a obligatwa!' });
@@ -117,27 +126,34 @@ app.post('/connect', async (req, res) => {
 
         await startBot();
 
-        // Bay socket la plis tan pou l louvri koneksyon an avèk rezo a san pèdi tan
-        let retries = 25; 
-        while (retries > 0) {
-            await delay(2000);
-            if (activeSock && activeSock.ws && activeSock.ws.isOpen) break;
-            retries--;
-        }
+        // ANSYEN KÒD LA te tann jiska 50 segonn (25 x 2s) anvan l mande kòd la.
+        // Sa se rezon prensipal ki fè kòd la ekspire anvan moun nan gen tan antre l.
+        // Baileys ka mande kòd pè a touswit apre socket la kreye — pa bezwen tann "ws.isOpen".
+        // Nou kite yon ti tan kout (3s) sèlman pou soket la fin enstalye, epi nou mete yon
+        // limit tan global (20s) pou demann lan pa janm rete "LOADING..." pou tout tan.
+        await delay(3000);
 
         if (!activeSock) {
             return res.status(500).json({ success: false, error: 'Echèk nan koneksyon ak sèvè WhatsApp la.' });
         }
 
-        let rawCode = await activeSock.requestPairingCode(phoneNumber);
+        let rawCode = await withTimeout(
+            activeSock.requestPairingCode(phoneNumber),
+            20000,
+            'Sèvè WhatsApp la pran twòp tan pou reponn. Eseye ankò.'
+        );
         let code = rawCode?.match(/.{1,4}/g)?.join("-") || rawCode;
 
         return res.json({ success: true, code: code });
 
     } catch (error) {
         console.error(error);
-        return res.status(500).json({ success: false, error: 'Echèk nan jenerasyon kòd la.' });
+        return res.status(500).json({ success: false, error: error.message || 'Echèk nan jenerasyon kòd la.' });
     }
+});
+
+app.get('/', (req, res) => {
+    res.send("FLUXION BUG BOT Backend is running!");
 });
 
 const PORT = process.env.PORT || 3000;
