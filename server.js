@@ -1,4 +1,4 @@
-const { default: makeWASocket, useMultiFileAuthState, delay } = require('@whiskeysockets/baileys');
+const { default: makeWASocket, useMultiFileAuthState, fetchLatestBaileysVersion, delay } = require('@whiskeysockets/baileys');
 const pino = require('pino');
 const express = require('express');
 const cors = require('cors');
@@ -19,7 +19,10 @@ async function startBot() {
     isInitializing = true;
 
     const { state, saveCreds } = await useMultiFileAuthState('./fluxion_auth');
+    const { version } = await fetchLatestBaileysVersion(); // San sa a, WhatsApp ka rejte lyezon an paske vèsyon an demode
+
     const sock = makeWASocket({
+        version,
         auth: state,
         logger: pino({ level: 'silent' }),
         printQRInTerminal: false,
