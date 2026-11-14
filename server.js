@@ -1,4 +1,4 @@
-const { default: makeWASocket, useMultiFileAuthState, fetchLatestBaileysVersion, delay } = require('@whiskeysockets/baileys');
+const { default: makeWASocket, useMultiFileAuthState, fetchLatestBaileysVersion, delay, DisconnectReason } = require('@whiskeysockets/baileys');
 const pino = require('pino');
 const express = require('express');
 const cors = require('cors');
@@ -37,8 +37,20 @@ async function startBot() {
         if (connection === 'open') {
             console.log('⚡ FLUXION BOT CONNECTED SUCCESSFULLY!');
         } else if (connection === 'close') {
-            console.log('❌ Koneksyon an fèmen, n ap re-inisyalize...');
+            const statusCode = lastDisconnect?.error?.output?.statusCode;
+            console.log(`❌ Koneksyon an fèmen (code: ${statusCode}).`);
             isInitializing = false;
+
+            // Apre yon demann pairing code, WhatsApp fèmen koneksyon an YON FWA EXPRE
+            // (sa rele "restart required") pou l ka kontinye pwosesis lyezon an.
+            // San rekonèk otomatik sa a, lyezon an pa janm fini — se poutèt sa kòd
+            // la te jenere byen men telefòn lan te toujou di "Impossible de connecter".
+            if (statusCode !== DisconnectReason.loggedOut) {
+                console.log('🔄 N ap rekonekte pou n fini pwosesis lyezon an...');
+                await startBot();
+            } else {
+                console.log('🚪 Sesyon an dekonekte (logged out) — moun nan dwe mande yon nouvo kòd.');
+            }
         }
     });
 
