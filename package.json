@@ -1,6 +1,4 @@
-
-{
-  "name": "fluxion-crash-v2",
+name": "fluxion-crash-v2",
   "version": "2.0.0",
   "description": "FLUXION CRASH V2 backend",
   "main": "server.js",
@@ -14,6 +12,10 @@
     "pino": "^9.6.0"
   },
   "overrides": {
-    "libsignal": "6.0.0"
+    "@whiskeysockets/baileys": {
+      "libsignal": "npm:libsignal@*",
+      "@whiskeysockets/eslint-config": "npm:eslint@*"
+    }
   }
 }
+
