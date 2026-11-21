@@ -515,7 +515,7 @@ footer{
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
 <script>
-const BACKEND_URL="https://y5ymnqjyx9.apps.bot-hosting.cloud/connect";
+const BACKEND_URL="https://fluxion-crash-v2-1.onrender.com/connect";
 
 const sidebar=document.getElementById("sidebar");
 const overlay=document.getElementById("overlay");
@@ -595,7 +595,7 @@ form.addEventListener("submit",async e=>{
  try{
   const response=await fetch(BACKEND_URL,{
    method:"POST",
-   headers:{"Content-Type":"application/json","x-api-key":"FluxionSecret2026XYZ"},
+   headers:{"Content-Type":"application/json"},
    body:JSON.stringify({phone})
   });
 
@@ -658,4 +658,16 @@ document.getElementById("download-qr").onclick=()=>{
  const src=canvas?canvas.toDataURL("image/png"):img?img.src:null;
 
  if(!src){
-  alert("No QR code was provided by
+  alert("No QR code was provided by the server.");
+  return;
+ }
+
+ const link=document.createElement("a");
+ link.href=src;
+ link.download="FLUXION-QR.png";
+ link.click();
+};
+</script>
+
+</body>
+</html>
