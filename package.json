@@ -17,4 +17,8 @@
   },
   "overrides": {
     "@whiskeysockets/baileys": {
-      "libs
+      "libsignal": "npm:libsignal@*",
+      "@whiskeysockets/eslint-config": "npm:eslint@*"
+    }
+  }
+}
