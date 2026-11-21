@@ -1,21 +1,20 @@
 {
-  "name": "fluxion-crash-v2",
-  "version": "2.0.0",
-  "description": "FLUXION CRASH V2 backend",
+  "name": "fluxion-bot",
+  "version": "1.0.0",
+  "description": "WhatsApp bot backend",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
   },
+  "engines": {
+    "node": ">=18.0.0"
+  },
   "dependencies": {
     "@whiskeysockets/baileys": "6.7.18",
-    "cors": "^2.8.5",
     "express": "^4.21.2",
+    "cors": "^2.8.5",
     "pino": "^9.6.0"
   },
   "overrides": {
     "@whiskeysockets/baileys": {
-      "libsignal": "npm:@whiskeysockets/libsignal-node@^2.0.1",
-      "@whiskeysockets/eslint-config": "npm:eslint-config-airbnb-base@^15.0.0"
-    }
-  }
-}
+      "libs
