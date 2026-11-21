@@ -1,80 +1,134 @@
-const { default: makeWASocket, useMultiFileAuthState, fetchLatestBaileysVersion, delay, DisconnectReason } = require('@whiskeysockets/baileys');
+
+const {
+  default: makeWASocket,
+  useMultiFileAuthState,
+  fetchLatestBaileysVersion,
+  DisconnectReason
+} = require('@whiskeysockets/baileys');
+
 const pino = require('pino');
 const express = require('express');
 const cors = require('cors');
-const path = require('path');
 const fs = require('fs');
+const path = require('path');
+const crypto = require('crypto');
+
 const app = express();
 
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-app.use(cors());
+app.use(express.json({ limit: '20kb' }));
+app.use(cors({
+  origin: process.env.ALLOWED_ORIGIN || '*'
+}));
+
+const PORT = process.env.PORT || 3000;
+const AUTH_DIR = path.join(__dirname, 'fluxion_auth');
+const API_KEY = process.env.FLUXION_API_KEY;
 
 let activeSock = null;
-let startTime = Date.now();
 let isInitializing = false;
+let reconnectTimer = null;
+let startTime = Date.now();
+let lastPairRequest = 0;
+let authState = null;
+
+const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
+
+function authorized(req) {
+  if (!API_KEY) return false;
+
+  const supplied = req.headers['x-api-key'];
+
+  if (typeof supplied !== 'string') return false;
+
+  const a = Buffer.from(supplied);
+  const b = Buffer.from(API_KEY);
+
+  return a.length === b.length &&
+    crypto.timingSafeEqual(a, b);
+}
 
 async function startBot() {
-    if (isInitializing && activeSock) return activeSock;
-    isInitializing = true;
+  if (activeSock || isInitializing) return activeSock;
 
-    const { state, saveCreds } = await useMultiFileAuthState('./fluxion_auth');
-    const { version } = await fetchLatestBaileysVersion(); // San sa a, WhatsApp ka rejte lyezon an paske vèsyon an demode
+  isInitializing = true;
+
+  try {
+    if (!authState) {
+      authState = await useMultiFileAuthState(AUTH_DIR);
+    }
+
+    const { state, saveCreds } = authState;
+    const { version } = await fetchLatestBaileysVersion();
 
     const sock = makeWASocket({
-        version,
-        auth: state,
-        logger: pino({ level: 'silent' }),
-        printQRInTerminal: false,
-        browser: ["Chrome (Linux)", "Chrome", "115.0.0.0"] // Enpòtan pou WhatsApp pa rejte koneksyon an
+      version,
+      auth: state,
+      logger: pino({ level: 'silent' }),
+      printQRInTerminal: false,
+      browser: ['FLUXION', 'Chrome', '1.0.0'],
+      connectTimeoutMs: 60000,
+      defaultQueryTimeoutMs: 60000,
+      keepAliveIntervalMs: 25000
     });
 
     activeSock = sock;
+
     sock.ev.on('creds.update', saveCreds);
 
-    sock.ev.on('connection.update', async (update) => {
-        const { connection, lastDisconnect } = update;
-        if (connection === 'open') {
-            console.log('⚡ FLUXION BOT CONNECTED SUCCESSFULLY!');
-        } else if (connection === 'close') {
-            const statusCode = lastDisconnect?.error?.output?.statusCode;
-            console.log(`❌ Koneksyon an fèmen (code: ${statusCode}).`);
-            isInitializing = false;
+    sock.ev.on('connection.update', async update => {
+      const { connection, lastDisconnect } = update;
 
-            // Apre yon demann pairing code, WhatsApp fèmen koneksyon an YON FWA EXPRE
-            // (sa rele "restart required") pou l ka kontinye pwosesis lyezon an.
-            // San rekonèk otomatik sa a, lyezon an pa janm fini — se poutèt sa kòd
-            // la te jenere byen men telefòn lan te toujou di "Impossible de connecter".
-            if (statusCode !== DisconnectReason.loggedOut) {
-                console.log('🔄 N ap rekonekte pou n fini pwosesis lyezon an...');
-                await startBot();
-            } else {
-                console.log('🚪 Sesyon an dekonekte (logged out) — moun nan dwe mande yon nouvo kòd.');
-            }
+      if (connection === 'open') {
+        console.log('⚡ FLUXION CONNECTED!');
+      }
+
+      if (connection === 'close') {
+        if (activeSock === sock) activeSock = null;
+
+        const statusCode =
+          lastDisconnect?.error?.output?.statusCode;
+
+        console.log('WhatsApp disconnected:', statusCode);
+
+        if (statusCode !== DisconnectReason.loggedOut) {
+          if (!reconnectTimer) {
+            reconnectTimer = setTimeout(async () => {
+              reconnectTimer = null;
+              await startBot();
+            }, 5000);
+          }
+        } else {
+          console.log('Session logged out. New pairing required.');
+          authState = null;
         }
+      }
     });
 
-    sock.ev.on("messages.upsert", async ({ messages }) => {
-        const msg = messages[0];
-        if (!msg.message || msg.key.fromMe) return;
+    sock.ev.on('messages.upsert', async ({ messages }) => {
+      for (const msg of messages) {
+        if (!msg.message || msg.key.fromMe) continue;
 
         const chat = msg.key.remoteJid;
-        if (!chat) return;
+        if (!chat) continue;
 
-        const body = msg.message.conversation || msg.message.extendedTextMessage?.text || "";
+        const body =
+          msg.message.conversation ||
+          msg.message.extendedTextMessage?.text ||
+          '';
+
         const command = body.trim().toLowerCase();
-        const reply = (text) => sock.sendMessage(chat, { text });
 
-        if (command === ".fluxioncomande" || command === ".menu" || command === ".start" || command === ".help") {
-            const audioPath = path.join(__dirname, 'menu.mp3');
-            if (fs.existsSync(audioPath)) {
-                await sock.sendMessage(chat, {
-                    audio: { url: audioPath },
-                    mimetype: 'audio/mp4',
-                    ptt: false
-                });
-            }
-            return reply(`╭━━━〔 ⚡ FLUXION CRASH V2 ⚡ 〕━━━╮
+        const reply = async text => {
+          await sock.sendMessage(chat, { text });
+        };
+
+        try {
+          if (
+            ['.menu', '.start', '.help', '.fluxioncomande']
+              .includes(command)
+          ) {
+            await reply(
+`╭━━━〔 ⚡ FLUXION CRASH V2 ⚡ 〕━━━╮
 ┃
 ┃ 〔 STATUS 〕
 ┃ • .start
@@ -86,92 +140,162 @@ async function startBot() {
 ┃
 ┃ 〔 OWNER 〕
 ┃ • .owner
-┃ • .self
-┃ • .public
-┃
-┃ 〔 MENUS 〕
-┃ • .bug-menu
-┃ • .groupmenu
 ┃
 ╰━━━━━━━━━━━━━━━━━━━━━━━━╯
- 
-POWER • SPEED • STYLE`);
-        }
 
-        if (command === ".ping") return reply("⚡ FLUXION PONG!");
-        if (command === ".alive") return reply("⚡ FLUXION CRASH V2 IS ONLINE!");
-        if (command === ".uptime") {
-            const seconds = Math.floor((Date.now() - startTime) / 1000);
-            return reply(`⚡ UPTIME: ${seconds} seconds`);
+POWER • SPEED • STYLE
+POWERED BY SPEED ITACHI`
+            );
+          }
+
+          else if (command === '.ping') {
+            await reply('⚡ FLUXION PONG!');
+          }
+
+          else if (command === '.alive') {
+            await reply('⚡ FLUXION CRASH V2 IS ONLINE!');
+          }
+
+          else if (command === '.uptime') {
+            const seconds = Math.floor(
+              (Date.now() - startTime) / 1000
+            );
+
+            await reply(`⚡ UPTIME: ${seconds} seconds`);
+          }
+
+          else if (command === '.owner') {
+            await reply('👑 OWNER: SPEED ITACHI');
+          }
+
+        } catch (error) {
+          console.error('Command error:', error.message);
         }
-        if (command === ".owner") return reply("👑 OWNER: SPEED ITACHI");
+      }
     });
 
-    isInitializing = false;
     return sock;
+
+  } catch (error) {
+    activeSock = null;
+    console.error('Bot startup error:', error.message);
+    throw error;
+
+  } finally {
+    isInitializing = false;
+  }
 }
 
-// Ti fonksyon ki mete yon limit tan sou nenpòt pwomès (anpeche sèvè a rete bloke pou tout tan)
-function withTimeout(promise, ms, timeoutMsg) {
-    let timer;
-    const timeout = new Promise((_, reject) => {
-        timer = setTimeout(() => reject(new Error(timeoutMsg)), ms);
-    });
-    return Promise.race([promise, timeout]).finally(() => clearTimeout(timer));
-}
-
-// Wout API pou jere koneksyon an byen vit, san rete bloke
+// Pairing endpoint: yon sèl sesyon pou yon sèl kont
 app.post('/connect', async (req, res) => {
-    let phoneNumber = req.body.phone || req.body.number;
-    if (!phoneNumber) return res.status(400).json({ success: false, error: 'Nimewo a obligatwa!' });
+  if (!authorized(req)) {
+    return res.status(401).json({
+      success: false,
+      error: 'Unauthorized'
+    });
+  }
 
-    phoneNumber = phoneNumber.replace(/[^0-9]/g, '');
+  let phone = req.body.phone || req.body.number;
 
+  if (typeof phone !== 'string') {
+    return res.status(400).json({
+      success: false,
+      error: 'Phone number required'
+    });
+  }
+
+  phone = phone.replace(/\D/g, '');
+
+  if (phone.length < 8 || phone.length > 15) {
+    return res.status(400).json({
+      success: false,
+      error: 'Invalid phone number'
+    });
+  }
+
+  if (Date.now() - lastPairRequest < 30000) {
+    return res.status(429).json({
+      success: false,
+      error: 'Wait 30 seconds before another request'
+    });
+  }
+
+  if (fs.existsSync(path.join(AUTH_DIR, 'creds.json'))) {
     try {
-        if (activeSock) {
-            try {
-                activeSock.end(undefined);
-            } catch (e) {}
-            activeSock = null;
-        }
+      const saved = JSON.parse(
+        fs.readFileSync(
+          path.join(AUTH_DIR, 'creds.json'),
+          'utf8'
+        )
+      );
 
-        if (fs.existsSync('./fluxion_auth')) {
-            fs.rmSync('./fluxion_auth', { recursive: true, force: true });
-        }
-
-        await startBot();
-
-        // ANSYEN KÒD LA te tann jiska 50 segonn (25 x 2s) anvan l mande kòd la.
-        // Sa se rezon prensipal ki fè kòd la ekspire anvan moun nan gen tan antre l.
-        // Baileys ka mande kòd pè a touswit apre socket la kreye — pa bezwen tann "ws.isOpen".
-        // Nou kite yon ti tan kout (3s) sèlman pou soket la fin enstalye, epi nou mete yon
-        // limit tan global (20s) pou demann lan pa janm rete "LOADING..." pou tout tan.
-        await delay(3000);
-
-        if (!activeSock) {
-            return res.status(500).json({ success: false, error: 'Echèk nan koneksyon ak sèvè WhatsApp la.' });
-        }
-
-        let rawCode = await withTimeout(
-            activeSock.requestPairingCode(phoneNumber),
-            20000,
-            'Sèvè WhatsApp la pran twòp tan pou reponn. Eseye ankò.'
-        );
-        let code = rawCode?.match(/.{1,4}/g)?.join("-") || rawCode;
-
-        return res.json({ success: true, code: code });
-
-    } catch (error) {
-        console.error(error);
-        return res.status(500).json({ success: false, error: error.message || 'Echèk nan jenerasyon kòd la.' });
+      if (saved.registered) {
+        return res.status(409).json({
+          success: false,
+          error: 'WhatsApp session already registered'
+        });
+      }
+    } catch (e) {
+      console.log('Could not read saved credentials.');
     }
+  }
+
+  lastPairRequest = Date.now();
+
+  try {
+    const sock = await startBot();
+
+    if (!sock) {
+      throw new Error('WhatsApp socket unavailable');
+    }
+
+    await sleep(2000);
+
+    if (activeSock !== sock) {
+      throw new Error('Connection changed. Try again.');
+    }
+
+    const rawCode = await sock.requestPairingCode(phone);
+    const code = rawCode.match(/.{1,4}/g)?.join('-') || rawCode;
+
+    return res.json({
+      success: true,
+      code
+    });
+
+  } catch (error) {
+    console.error('Pairing error:', error.message);
+
+    return res.status(500).json({
+      success: false,
+      error: 'Pairing failed. Please try again.'
+    });
+  }
 });
 
+// System status
+app.get('/api/status', (req, res) => {
+  res.json({
+    success: true,
+    backend: 'ONLINE',
+    whatsapp: activeSock ? 'INITIALIZED' : 'DISCONNECTED',
+    uptime: Math.floor((Date.now() - startTime) / 1000),
+    bot: 'FLUXION CRASH V2'
+  });
+});
+
+// Home
 app.get('/', (req, res) => {
-    res.send("FLUXION BUG BOT Backend is running!");
+  res.send('⚡ FLUXION CRASH V2 Backend is ONLINE!');
 });
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-    console.log(`Sèvè a ap kouri sou port ${PORT}`);
+// Start server
+app.listen(PORT, async () => {
+  console.log(`FLUXION server running on port ${PORT}`);
+
+  try {
+    await startBot();
+  } catch (error) {
+    console.error('Initial bot startup failed:', error.message);
+  }
 });
